@@ -109,7 +109,6 @@ export const assignments = pgTable('assignments', {
   studentIdx: index('assignment_student_idx').on(table.studentId),
   orgIdx: index('assignment_org_idx').on(table.organizationId),
   startTimeIdx: index('assignment_start_time_idx').on(table.startTime),
-  dateIdx: index('assignment_date_idx').on(sql`DATE(${table.startTime})`),
 }));
 
 // Session management for NextAuth.js

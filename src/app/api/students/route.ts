@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, DEFAULT_ORG_ID, DEFAULT_USER_ID } from '@/lib/db/connection';
+import { db, DEFAULT_ORG_ID, DEFAULT_USER_ID, initializeDatabase } from '@/lib/db/connection';
 import { students, cohorts } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
 // GET /api/students - Get all students
 export async function GET() {
   try {
+    // Initialize database if needed
+    await initializeDatabase();
+    
+    if (!DEFAULT_ORG_ID) {
+      return NextResponse.json(
+        { error: 'Database not initialized' },
+        { status: 500 }
+      );
+    }
+
     const studentsWithCohorts = await db
       .select({
         id: students.id,
