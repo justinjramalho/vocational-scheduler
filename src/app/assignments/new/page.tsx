@@ -32,8 +32,13 @@ function NewAssignmentPageInner() {
     fetchStudents();
 
     const studentId = searchParams.get('studentId');
+    const cohortId = searchParams.get('cohortId');
+    
     if (studentId) {
       setInitialFormData({ studentId });
+    } else if (cohortId) {
+      // For cohort assignments, we'll let user select from cohort students
+      setInitialFormData({ cohortId });
     }
   }, [searchParams]);
 
@@ -41,16 +46,20 @@ function NewAssignmentPageInner() {
     setIsSubmitting(true);
     
     try {
-      // Here you would typically save to a database
-      console.log('Assignment form data:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Show success message and redirect
-      alert('Assignment created successfully!');
-      router.push('/');
-      
+      const response = await fetch('/api/assignments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        alert('Assignment created successfully!');
+        router.push('/schedules');
+      } else {
+        throw new Error('Failed to create assignment');
+      }
     } catch (error) {
       console.error('Error creating assignment:', error);
       alert('Error creating assignment. Please try again.');

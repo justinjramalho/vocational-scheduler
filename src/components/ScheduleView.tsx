@@ -58,9 +58,22 @@ export default function ScheduleView({
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
-        // For now, we'll return empty assignments since the API doesn't exist yet
-        // TODO: Implement assignments API endpoint
-        setAssignments([]);
+        const dateStr = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+        let url = '/api/assignments?';
+        
+        if (viewType === 'student') {
+          url += `studentId=${targetId}&date=${dateStr}`;
+        } else {
+          url += `cohortId=${targetId}&date=${dateStr}`;
+        }
+        
+        const response = await fetch(url);
+        if (response.ok) {
+          const assignmentsData = await response.json();
+          setAssignments(assignmentsData);
+        } else {
+          setAssignments([]);
+        }
       } catch (error) {
         console.error('Error fetching assignments:', error);
         setAssignments([]);
@@ -78,7 +91,8 @@ export default function ScheduleView({
       
       // Find the next assignment after current time
       const nextAssignment = assignments.find(assignment => {
-        const assignmentTime = assignment.startTime.getHours() * 60 + assignment.startTime.getMinutes();
+        const startTime = typeof assignment.startTime === 'string' ? new Date(assignment.startTime) : assignment.startTime;
+        const assignmentTime = startTime.getHours() * 60 + startTime.getMinutes();
         return assignmentTime >= currentTimeMinutes;
       });
 
@@ -90,8 +104,9 @@ export default function ScheduleView({
     }
   }, [assignments]);
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+  const formatTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -108,7 +123,9 @@ export default function ScheduleView({
 
   const isCurrentEvent = (assignment: Assignment) => {
     const now = new Date();
-    return now >= assignment.startTime && now <= assignment.endTime;
+    const startTime = typeof assignment.startTime === 'string' ? new Date(assignment.startTime) : assignment.startTime;
+    const endTime = typeof assignment.endTime === 'string' ? new Date(assignment.endTime) : assignment.endTime;
+    return now >= startTime && now <= endTime;
   };
 
   const getWeekDates = () => {

@@ -119,7 +119,7 @@ export async function initializeDatabase() {
       }).returning();
 
       // Add demo students
-      await db.insert(schema.students).values([
+      const students = await db.insert(schema.students).values([
         {
           firstName: 'John',
           lastName: 'Smith',
@@ -176,9 +176,85 @@ export async function initializeDatabase() {
           organizationId: newOrg.id,
           createdBy: newUser.id,
         }
-      ]);
+      ]).returning();
 
-      console.log('Database initialized with demo data');
+      // Add sample assignments for today and tomorrow
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+
+      // Sample assignments for today
+      const todayAssignments = [
+        {
+          studentId: students[0].id, // John Smith
+          eventType: 'Academic',
+          eventTitle: 'Math Review Session',
+          location: 'Room 101',
+          startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0),
+          duration: 60,
+          endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0),
+          responsibleParty: 'Ms. Johnson',
+          pointOfContact: 'Math Department',
+          organizationId: newOrg.id,
+          createdBy: newUser.id,
+        },
+        {
+          studentId: students[0].id, // John Smith
+          eventType: 'Vocational',
+          eventTitle: 'Automotive Shop Practice',
+          location: 'Auto Shop A',
+          startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 0),
+          duration: 120,
+          endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 13, 0),
+          responsibleParty: 'Mr. Rodriguez',
+          pointOfContact: 'Auto Shop Supervisor',
+          organizationId: newOrg.id,
+          createdBy: newUser.id,
+        },
+        {
+          studentId: students[1].id, // Emma Johnson
+          eventType: 'Therapy',
+          eventTitle: 'Speech Therapy Session',
+          location: 'Therapy Room B',
+          startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 30),
+          duration: 45,
+          endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 15),
+          responsibleParty: 'Dr. Williams',
+          pointOfContact: 'Speech Therapist',
+          organizationId: newOrg.id,
+          createdBy: newUser.id,
+        },
+        {
+          studentId: students[2].id, // Michael Brown
+          eventType: 'Vocational',
+          eventTitle: 'Culinary Arts - Baking',
+          location: 'Kitchen Lab',
+          startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 13, 0),
+          duration: 90,
+          endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 30),
+          responsibleParty: 'Chef Martinez',
+          pointOfContact: 'Culinary Instructor',
+          organizationId: newOrg.id,
+          createdBy: newUser.id,
+        },
+        {
+          studentId: students[3].id, // Sophia Davis
+          eventType: 'Extra-curricular',
+          eventTitle: 'Job Interview Practice',
+          location: 'Conference Room',
+          startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0),
+          duration: 60,
+          endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 0),
+          responsibleParty: 'Career Counselor',
+          pointOfContact: 'Ms. Thompson',
+          organizationId: newOrg.id,
+          createdBy: newUser.id,
+        }
+      ];
+
+      await db.insert(schema.assignments).values(todayAssignments);
+
+      console.log('Database initialized with demo data and sample assignments');
     } else {
       DEFAULT_ORG_ID = existingOrg.id;
       
@@ -254,7 +330,7 @@ export async function initializeDatabase() {
         }).returning();
 
         // Add demo students
-        await db.insert(schema.students).values([
+        const existingStudents = await db.insert(schema.students).values([
           {
             firstName: 'John',
             lastName: 'Smith',
@@ -311,9 +387,42 @@ export async function initializeDatabase() {
             organizationId: existingOrg.id,
             createdBy: existingUser.id,
           }
-        ]);
+        ]).returning();
 
-        console.log('Demo classes, cohorts and students created for existing organization');
+        // Add sample assignments for existing organization
+        const today = new Date();
+        const existingAssignments = [
+          {
+            studentId: existingStudents[0].id, // John Smith
+            eventType: 'Academic',
+            eventTitle: 'Math Review Session',
+            location: 'Room 101',
+            startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0),
+            duration: 60,
+            endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0),
+            responsibleParty: 'Ms. Johnson',
+            pointOfContact: 'Math Department',
+            organizationId: existingOrg.id,
+            createdBy: existingUser.id,
+          },
+          {
+            studentId: existingStudents[1].id, // Emma Johnson
+            eventType: 'Therapy',
+            eventTitle: 'Speech Therapy Session',
+            location: 'Therapy Room B',
+            startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 30),
+            duration: 45,
+            endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 15),
+            responsibleParty: 'Dr. Williams',
+            pointOfContact: 'Speech Therapist',
+            organizationId: existingOrg.id,
+            createdBy: existingUser.id,
+          }
+        ];
+
+        await db.insert(schema.assignments).values(existingAssignments);
+
+        console.log('Demo classes, cohorts, students and assignments created for existing organization');
       }
     }
   } catch (error) {
