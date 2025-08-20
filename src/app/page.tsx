@@ -280,6 +280,101 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Simple Footer - Expandable for Future Development */}
+      <footer 
+        className="bg-white border-t border-gray-200 mt-16" 
+        role="contentinfo"
+        aria-labelledby="footer-heading"
+      >
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            {/* Footer Brand */}
+            <h2 id="footer-heading" className="text-lg font-semibold text-blue-600 mb-4">
+              Vocational Scheduler
+            </h2>
+            
+            {/* Footer Description */}
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Empowering special education vocational programs with accessible, comprehensive scheduling solutions.
+            </p>
+            
+            {/* Footer Links - Prepared for Future Development */}
+            <nav 
+              className="flex flex-wrap justify-center gap-6 mb-6"
+              aria-label="Footer navigation"
+            >
+              <AccessibleButton
+                variant="tertiary"
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium border-transparent focus:border-blue-500 transition-colors"
+                disabled
+                aria-describedby="about-description"
+              >
+                About
+              </AccessibleButton>
+              
+              <AccessibleButton
+                variant="tertiary"
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium border-transparent focus:border-blue-500 transition-colors"
+                disabled
+                aria-describedby="privacy-description"
+              >
+                Privacy Policy
+              </AccessibleButton>
+              
+              <AccessibleButton
+                variant="tertiary"
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium border-transparent focus:border-blue-500 transition-colors"
+                disabled
+                aria-describedby="terms-description"
+              >
+                Terms of Service
+              </AccessibleButton>
+              
+              <AccessibleButton
+                variant="tertiary"
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium border-transparent focus:border-blue-500 transition-colors"
+                disabled
+                aria-describedby="support-description"
+              >
+                Support
+              </AccessibleButton>
+            </nav>
+            
+            {/* Copyright and Accessibility Statement */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm text-gray-500">
+                <p>
+                  © 2025 Vocational Scheduler. Built for accessibility.
+                </p>
+                
+                {/* Accessibility Badge */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                    WCAG 2.1 AA
+                  </span>
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                    508 Compliant
+                  </span>
+                </div>
+              </div>
+              
+              {/* Version Info - Hidden but available for development */}
+              <p className="text-xs text-gray-400 mt-2">
+                Version 1.0.0 | Special Education Focus
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Screen reader descriptions for footer links */}
+        <div className="sr-only">
+          <p id="about-description">Learn more about Vocational Scheduler (coming soon)</p>
+          <p id="privacy-description">Read our privacy policy (coming soon)</p>
+          <p id="terms-description">View terms of service (coming soon)</p>
+          <p id="support-description">Get help and support (coming soon)</p>
+        </div>
+      </footer>
     </div>
     </ErrorBoundary>
   );
