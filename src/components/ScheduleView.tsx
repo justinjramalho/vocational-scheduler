@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Assignment, Student, StudentCohort, EventType } from '@/types';
+import AccessibleButton from './AccessibleButton';
+import LoadingSpinner from './LoadingSpinner';
 
 // Event type color mapping
 const eventTypeColors: Record<EventType, { bg: string; border: string; text: string }> = {

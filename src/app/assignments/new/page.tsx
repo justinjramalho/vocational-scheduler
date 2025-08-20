@@ -4,6 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AssignmentForm from '@/components/AssignmentForm';
 import { AssignmentFormData, Student } from '@/types';
+import SkipNavigation from '@/components/SkipNavigation';
+import AccessibleButton from '@/components/AccessibleButton';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 function NewAssignmentPageInner() {
   const router = useRouter();
