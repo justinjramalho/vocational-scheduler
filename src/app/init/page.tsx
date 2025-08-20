@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { initApi } from '@/lib/services/api';
+import AppLayout from '@/components/AppLayout';
 
 export default function InitializePage() {
   const router = useRouter();
@@ -25,8 +26,9 @@ export default function InitializePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+    <AppLayout>
+      <div className="flex items-center justify-center py-16">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
           Database Initialization
         </h1>
@@ -79,7 +81,8 @@ export default function InitializePage() {
             </button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
