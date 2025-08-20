@@ -10,7 +10,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "deploy": "git add . && git commit -m 'Update: Deploy latest changes' && git push origin main",
+    "dev:fresh": "pkill -f 'next dev' || true && npm run dev",
+    "test:local": "curl -s http://localhost:3000/api/students | jq . || echo 'Server not running or no data'"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
