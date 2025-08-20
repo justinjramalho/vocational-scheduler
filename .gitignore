@@ -1,0 +1,21 @@
+# Environment Variables
+.env.local
+.env
+
+# Dependencies  
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Database
+drizzle/*.sql
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

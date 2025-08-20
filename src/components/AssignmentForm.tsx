@@ -1,0 +1,403 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { AssignmentFormData, EventType, RecurrenceType, Student } from '@/types';
+
+interface AssignmentFormProps {
+  onSubmit: (data: AssignmentFormData) => void;
+  onCancel: () => void;
+  initialData?: Partial<AssignmentFormData>;
+  students: Student[];
+}
+
+export default function AssignmentForm({ 
+  onSubmit, 
+  onCancel, 
+  initialData, 
+  students 
+}: AssignmentFormProps) {
+  const [formData, setFormData] = useState<AssignmentFormData>({
+    studentId: '',
+    eventType: '',
+    eventTitle: '',
+    location: '',
+    startTime: '',
+    duration: 60, // default 1 hour
+    recurrence: 'None',
+    recurrenceEndDate: '',
+    notes: '',
+    responsibleParty: '',
+    pointOfContact: '',
+    ...initialData
+  });
+
+  type FormErrors = {
+    [K in keyof AssignmentFormData]?: string;
+  };
+
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  // Reset form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData(prev => ({ ...prev, ...initialData }));
+    }
+  }, [initialData]);
+
+  const eventTypeOptions: EventType[] = [
+    'Academic',
+    'Elective',
+    'Therapy',
+    'Vocational',
+    'Testing',
+    'Extra-curricular'
+  ];
+
+  const recurrenceOptions: RecurrenceType[] = [
+    'None',
+    'Daily',
+    'Weekly',
+    'Monthly'
+  ];
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.studentId) newErrors.studentId = 'Student is required';
+    if (!formData.eventType) newErrors.eventType = 'Event type is required';
+    if (!formData.eventTitle) newErrors.eventTitle = 'Event title is required';
+    if (!formData.location) newErrors.location = 'Location is required';
+    if (!formData.startTime) newErrors.startTime = 'Start time is required';
+    if (!formData.duration || formData.duration <= 0) {
+      newErrors.duration = 'Duration must be greater than 0';
+    }
+    if (!formData.responsibleParty) {
+      newErrors.responsibleParty = 'Responsible party is required';
+    }
+    
+    // Validate recurrence end date if recurrence is set
+    if (formData.recurrence !== 'None' && !formData.recurrenceEndDate) {
+      newErrors.recurrenceEndDate = 'End date is required for recurring assignments';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSubmit(formData);
+    }
+  };
+
+  const handleInputChange = (
+    field: keyof AssignmentFormData,
+    value: string | number
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const incrementDuration = () => {
+    setFormData(prev => ({ ...prev, duration: prev.duration + 15 }));
+  };
+
+  const decrementDuration = () => {
+    if (formData.duration > 15) {
+      setFormData(prev => ({ ...prev, duration: prev.duration - 15 }));
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-4 sm:p-6">
+      <div className="bg-white rounded-lg shadow-lg">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Create New Assignment
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Student Selection */}
+          <div>
+            <label htmlFor="studentId" className="block text-sm font-medium text-gray-700 mb-1">
+              Student Name *
+            </label>
+            <select
+              id="studentId"
+              value={formData.studentId}
+              onChange={(e) => handleInputChange('studentId', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.studentId ? 'border-red-300' : 'border-gray-300'
+              }`}
+            >
+              <option value="">Select a student</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.fullName}
+                </option>
+              ))}
+            </select>
+            {errors.studentId && (
+              <p className="mt-1 text-sm text-red-600">{errors.studentId}</p>
+            )}
+          </div>
+
+          {/* Spacer */}
+          <div className="h-4"></div>
+
+          {/* Event Type & Title */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="eventType" className="block text-sm font-medium text-gray-700 mb-1">
+                Event Type *
+              </label>
+              <select
+                id="eventType"
+                value={formData.eventType}
+                onChange={(e) => handleInputChange('eventType', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.eventType ? 'border-red-300' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select event type</option>
+                {eventTypeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              {errors.eventType && (
+                <p className="mt-1 text-sm text-red-600">{errors.eventType}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="eventTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                Event Title *
+              </label>
+              <input
+                type="text"
+                id="eventTitle"
+                value={formData.eventTitle}
+                onChange={(e) => handleInputChange('eventTitle', e.target.value)}
+                disabled={!formData.eventType}
+                placeholder="Enter event title"
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                  errors.eventTitle ? 'border-red-300' : 'border-gray-300'
+                }`}
+              />
+              {errors.eventTitle && (
+                <p className="mt-1 text-sm text-red-600">{errors.eventTitle}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Spacer */}
+          <div className="h-4"></div>
+
+          {/* Location */}
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+              Location *
+            </label>
+            <input
+              type="text"
+              id="location"
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              placeholder="Enter location"
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.location ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {errors.location && (
+              <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+            )}
+          </div>
+
+          {/* Spacer */}
+          <div className="h-4"></div>
+
+          {/* Start Time & Duration */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-1">
+                Start Time *
+              </label>
+              <input
+                type="datetime-local"
+                id="startTime"
+                value={formData.startTime}
+                onChange={(e) => handleInputChange('startTime', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.startTime ? 'border-red-300' : 'border-gray-300'
+                }`}
+              />
+              {errors.startTime && (
+                <p className="mt-1 text-sm text-red-600">{errors.startTime}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-1">
+                Duration (minutes) *
+              </label>
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={decrementDuration}
+                  className="px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  id="duration"
+                  value={formData.duration}
+                  onChange={(e) => handleInputChange('duration', parseInt(e.target.value) || 0)}
+                  min="15"
+                  step="15"
+                  className={`w-full px-3 py-2 border-t border-b border-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.duration ? 'border-red-300' : ''
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={incrementDuration}
+                  className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  +
+                </button>
+              </div>
+              {errors.duration && (
+                <p className="mt-1 text-sm text-red-600">{errors.duration}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Recurrence & End Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="recurrence" className="block text-sm font-medium text-gray-700 mb-1">
+                Recurrence
+              </label>
+              <select
+                id="recurrence"
+                value={formData.recurrence}
+                onChange={(e) => handleInputChange('recurrence', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {recurrenceOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="recurrenceEndDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Recurrence End Date {formData.recurrence !== 'None' && '*'}
+              </label>
+              <input
+                type="date"
+                id="recurrenceEndDate"
+                value={formData.recurrenceEndDate}
+                onChange={(e) => handleInputChange('recurrenceEndDate', e.target.value)}
+                disabled={formData.recurrence === 'None'}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                  errors.recurrenceEndDate ? 'border-red-300' : 'border-gray-300'
+                }`}
+              />
+              {errors.recurrenceEndDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.recurrenceEndDate}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Spacer */}
+          <div className="h-4"></div>
+
+          {/* Notes */}
+          <div>
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+              Notes
+            </label>
+            <textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              rows={3}
+              placeholder="Add any additional notes..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Spacer */}
+          <div className="h-4"></div>
+
+          {/* Responsible Party & Point of Contact */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="responsibleParty" className="block text-sm font-medium text-gray-700 mb-1">
+                Responsible Party *
+              </label>
+              <input
+                type="text"
+                id="responsibleParty"
+                value={formData.responsibleParty}
+                onChange={(e) => handleInputChange('responsibleParty', e.target.value)}
+                placeholder="Enter responsible party"
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.responsibleParty ? 'border-red-300' : 'border-gray-300'
+                }`}
+              />
+              {errors.responsibleParty && (
+                <p className="mt-1 text-sm text-red-600">{errors.responsibleParty}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="pointOfContact" className="block text-sm font-medium text-gray-700 mb-1">
+                Point of Contact
+              </label>
+              <input
+                type="text"
+                id="pointOfContact"
+                value={formData.pointOfContact}
+                onChange={(e) => handleInputChange('pointOfContact', e.target.value)}
+                placeholder="Enter point of contact"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="w-full sm:w-auto px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                Create Assignment
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
