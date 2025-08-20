@@ -3,17 +3,34 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AssignmentForm from '@/components/AssignmentForm';
-import { AssignmentFormData } from '@/types';
-import { mockStudents } from '@/utils/mockData';
+import { AssignmentFormData, Student } from '@/types';
 
 function NewAssignmentPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const [initialFormData, setInitialFormData] = useState<Partial<AssignmentFormData>>({});
 
-  // Check for pre-selected student from URL params
+  // Fetch students and handle pre-selected student from URL params
   useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch('/api/students');
+        if (response.ok) {
+          const studentsData = await response.json();
+          setStudents(studentsData);
+        }
+      } catch (error) {
+        console.error('Error fetching students:', error);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    fetchStudents();
+
     const studentId = searchParams.get('studentId');
     if (studentId) {
       setInitialFormData({ studentId });
@@ -97,8 +114,9 @@ function NewAssignmentPageInner() {
         <AssignmentForm
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          students={mockStudents}
+          students={students}
           initialData={initialFormData}
+          loading={loadingStudents}
         />
       </main>
     </div>

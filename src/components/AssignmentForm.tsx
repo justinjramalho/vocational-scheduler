@@ -8,13 +8,15 @@ interface AssignmentFormProps {
   onCancel: () => void;
   initialData?: Partial<AssignmentFormData>;
   students: Student[];
+  loading?: boolean;
 }
 
 export default function AssignmentForm({ 
   onSubmit, 
   onCancel, 
   initialData, 
-  students 
+  students,
+  loading = false
 }: AssignmentFormProps) {
   const [formData, setFormData] = useState<AssignmentFormData>({
     studentId: '',

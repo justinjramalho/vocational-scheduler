@@ -1,10 +1,38 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { mockStudents, mockCohorts } from '@/utils/mockData';
+import { useState, useEffect } from 'react';
+import { Student, StudentCohort } from '@/types';
 
 export default function SchedulesPage() {
   const router = useRouter();
+  const [students, setStudents] = useState<Student[]>([]);
+  const [cohorts, setCohorts] = useState<StudentCohort[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [studentsResponse, cohortsResponse] = await Promise.all([
+          fetch('/api/students'),
+          fetch('/api/cohorts')
+        ]);
+        
+        if (studentsResponse.ok && cohortsResponse.ok) {
+          const studentsData = await studentsResponse.json();
+          const cohortsData = await cohortsResponse.json();
+          setStudents(studentsData);
+          setCohorts(cohortsData);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -57,8 +85,14 @@ export default function SchedulesPage() {
                 <p className="text-sm text-gray-600 mt-1">View daily schedules for specific students</p>
               </div>
               <div className="p-6">
-                <div className="space-y-3">
-                  {mockStudents.filter(s => s.active).map(student => (
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-2">Loading students...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {students.filter(s => s.active).map(student => (
                     <div key={student.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="flex items-center">
                         <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
@@ -78,8 +112,9 @@ export default function SchedulesPage() {
                         View Schedule
                       </button>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -90,8 +125,14 @@ export default function SchedulesPage() {
                 <p className="text-sm text-gray-600 mt-1">View schedules for entire cohorts or classes</p>
               </div>
               <div className="p-6">
-                <div className="space-y-3">
-                  {mockCohorts.filter(c => c.active).map(cohort => (
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-2">Loading cohorts...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cohorts.filter(c => c.active).map(cohort => (
                     <div key={cohort.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="flex items-center">
                         <div 
@@ -105,7 +146,7 @@ export default function SchedulesPage() {
                         <div>
                           <p className="text-sm font-medium text-gray-900">{cohort.name}</p>
                           <p className="text-xs text-gray-600">
-                            {cohort.studentIds.length} student{cohort.studentIds.length !== 1 ? 's' : ''} • {cohort.teacherName}
+                            {cohort.studentCount || 0} student{cohort.studentCount !== 1 ? 's' : ''} • {cohort.teacherName}
                           </p>
                         </div>
                       </div>
@@ -116,8 +157,9 @@ export default function SchedulesPage() {
                         View Schedule
                       </button>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

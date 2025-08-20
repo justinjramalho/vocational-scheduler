@@ -1,8 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Assignment, Student, StudentCohort } from '@/types';
-import { getStudentAssignments, getCohortAssignments, eventTypeColors } from '@/utils/mockData';
+import { Assignment, Student, StudentCohort, EventType } from '@/types';
+
+// Event type color mapping
+const eventTypeColors: Record<EventType, { bg: string; border: string; text: string }> = {
+  'Academic': { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-800' },
+  'Elective': { bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-800' },
+  'Therapy': { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800' },
+  'Vocational': { bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-800' },
+  'Testing': { bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-800' },
+  'Extra-curricular': { bg: 'bg-pink-100', border: 'border-pink-300', text: 'text-pink-800' },
+};
 
 interface ScheduleViewProps {
   viewType: 'student' | 'cohort';
@@ -47,11 +56,18 @@ export default function ScheduleView({
 
   // Load assignments when date or target changes
   useEffect(() => {
-    if (viewType === 'student') {
-      setAssignments(getStudentAssignments(targetId, selectedDate));
-    } else {
-      setAssignments(getCohortAssignments(targetId, selectedDate));
-    }
+    const fetchAssignments = async () => {
+      try {
+        // For now, we'll return empty assignments since the API doesn't exist yet
+        // TODO: Implement assignments API endpoint
+        setAssignments([]);
+      } catch (error) {
+        console.error('Error fetching assignments:', error);
+        setAssignments([]);
+      }
+    };
+
+    fetchAssignments();
   }, [viewType, targetId, selectedDate]);
 
   // Auto-scroll to current time on mount

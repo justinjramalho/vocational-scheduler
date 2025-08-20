@@ -4,7 +4,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import ScheduleView from '@/components/ScheduleView';
 import { Student } from '@/types';
-import { mockStudents } from '@/utils/mockData';
 
 export default function StudentSchedulePage() {
   const router = useRouter();
@@ -13,10 +12,26 @@ export default function StudentSchedulePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const studentId = params.id as string;
-    const foundStudent = mockStudents.find(s => s.id === studentId);
-    setStudent(foundStudent || null);
-    setLoading(false);
+    const fetchStudent = async () => {
+      try {
+        const studentId = params.id as string;
+        const response = await fetch(`/api/students/${studentId}`);
+        
+        if (response.ok) {
+          const studentData = await response.json();
+          setStudent(studentData);
+        } else {
+          setStudent(null);
+        }
+      } catch (error) {
+        console.error('Error fetching student:', error);
+        setStudent(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudent();
   }, [params.id]);
 
   const handleNavigateToMenu = () => {
