@@ -53,26 +53,19 @@ export async function GET(request: NextRequest) {
         academicYear: classes.academicYear,
         eventType: classes.eventType,
         programId: classes.programId,
-        assignmentId: classes.assignmentId,
+        // assignmentId: classes.assignmentId, // REMOVED - field no longer exists
         location: classes.location,
         defaultDuration: classes.defaultDuration,
         active: classes.active,
         createdAt: classes.createdAt,
         updatedAt: classes.updatedAt,
         programName: programs.name,
-        cohortCount: sql<number>`COUNT(DISTINCT ${cohorts.id})::int`,
-        studentCount: sql<number>`COUNT(DISTINCT ${students.id})::int`,
+        // Simplified counts since relationships changed
+        cohortCount: sql<number>`0::int`, // No direct class-cohort relationship anymore
+        studentCount: sql<number>`0::int`, // No direct class-student relationship anymore
       })
       .from(classes)
       .leftJoin(programs, eq(classes.programId, programs.id))
-      .leftJoin(cohorts, and(
-        eq(classes.id, cohorts.classId),
-        eq(cohorts.active, true)
-      ))
-      .leftJoin(students, and(
-        eq(classes.id, students.classId),
-        eq(students.active, true)
-      ))
       .where(and(...whereConditions))
       .groupBy(classes.id, programs.name)
       .orderBy(desc(classes.createdAt));
@@ -116,7 +109,7 @@ export async function POST(request: NextRequest) {
       name, // class title from assignment
       eventType, // Academic or Elective
       programId, // from student's program
-      assignmentId, // reference to original assignment
+      // assignmentId, // REMOVED - field no longer exists
       location, // from assignment
       defaultDuration, // from assignment duration
       description,
@@ -177,18 +170,18 @@ export async function POST(request: NextRequest) {
       name,
       eventType,
       programId,
-      assignmentId: assignmentId || null,
+      // assignmentId: assignmentId || null, // REMOVED - field no longer exists
       location: location || null,
       defaultDuration: defaultDuration || null,
       description: description || null,
       code: code || null,
       department: department || null,
       credits: credits || null,
-      duration: duration || null,
+      // duration: duration || null, // FIXED - variable doesn't exist
       color: color || '#3B82F6',
       academicYear: academicYear || null,
       organizationId: DEFAULT_ORG_ID,
-      createdBy: DEFAULT_USER_ID,
+      // createdBy: DEFAULT_USER_ID, // REMOVED - field no longer exists
     }).returning();
 
     const response = {

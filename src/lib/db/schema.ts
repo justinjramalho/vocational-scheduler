@@ -73,7 +73,7 @@ export const classes = pgTable('classes', {
   academicYear: varchar('academic_year', { length: 20 }),
   eventType: varchar('event_type', { length: 50 }), // Academic, Elective (for class assignments)
   programId: uuid('program_id').references(() => programs.id), // scoped to program for uniqueness
-  assignmentId: uuid('assignment_id'), // original assignment that created this class (FK resolved after assignments table)
+  // assignmentId: uuid('assignment_id'), // TEMPORARILY COMMENTED OUT FOR TESTING
   location: varchar('location', { length: 255 }), // default location for this class
   defaultDuration: integer('default_duration'), // default duration in minutes
   organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
@@ -85,7 +85,7 @@ export const classes = pgTable('classes', {
   orgIdx: index('class_org_idx').on(table.organizationId),
   codeIdx: index('class_code_idx').on(table.code),
   programIdx: index('class_program_idx').on(table.programId),
-  assignmentIdx: index('class_assignment_idx').on(table.assignmentId),
+  // assignmentIdx: index('class_assignment_idx').on(table.assignmentId), // TEMPORARILY COMMENTED OUT
 }));
 
 // Student Cohorts/Groups (tied to Programs, not Classes)
@@ -113,7 +113,7 @@ export const students = pgTable('students', {
   studentId: varchar('student_id', { length: 50 }), // school ID
   grade: varchar('grade', { length: 50 }),
   program: varchar('program', { length: 200 }), // student's program
-  classId: uuid('class_id').references(() => classes.id), // primary class enrollment
+  // classId: uuid('class_id').references(() => classes.id), // TEMPORARILY COMMENTED OUT FOR TESTING
   cohortId: uuid('cohort_id').references(() => cohorts.id), // section within the class
   notes: text('notes'),
   emergencyContact: varchar('emergency_contact', { length: 500 }),
@@ -125,17 +125,17 @@ export const students = pgTable('students', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   orgIdx: index('student_org_idx').on(table.organizationId),
-  classIdx: index('student_class_idx').on(table.classId),
+  // classIdx: index('student_class_idx').on(table.classId), // TEMPORARILY COMMENTED OUT
   cohortIdx: index('student_cohort_idx').on(table.cohortId),
   nameIdx: index('student_name_idx').on(table.lastName, table.firstName),
 }));
 
-// Assignments/Events
+// Assignments/Events - MINIMAL VERSION FOR INCREMENTAL TESTING
 export const assignments = pgTable('assignments', {
   id: uuid('id').defaultRandom().primaryKey(),
   studentId: uuid('student_id').references(() => students.id).notNull(),
-  classId: uuid('class_id').references(() => classes.id), // nullable - only for Academic/Elective assignments
-  eventType: varchar('event_type', { length: 50 }).notNull(), // Academic, Therapy, etc.
+  classId: uuid('class_id').references(() => classes.id), // ONE-WAY RELATIONSHIP - nullable
+  eventType: varchar('event_type', { length: 50 }).notNull(),
   eventTitle: varchar('event_title', { length: 255 }).notNull(),
   location: varchar('location', { length: 255 }).notNull(),
   startTime: timestamp('start_time', { withTimezone: true }).notNull(),
@@ -146,8 +146,7 @@ export const assignments = pgTable('assignments', {
   notes: text('notes'),
   responsibleParty: varchar('responsible_party', { length: 255 }).notNull(),
   pointOfContact: varchar('point_of_contact', { length: 255 }),
-  organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
-  createdBy: uuid('created_by').references(() => users.id),
+  organizationId: uuid('organization_id').references(() => organizations.id).notNull(), // RESTORED FOREIGN KEY
   active: boolean('active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

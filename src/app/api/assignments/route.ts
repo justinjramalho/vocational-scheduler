@@ -26,7 +26,30 @@ export async function GET(request: Request) {
 
     if (studentId) {
       // Get assignments for a specific student
-      let query = db
+      // Build where conditions
+      const whereConditions = [
+        eq(schema.assignments.studentId, studentId),
+        eq(schema.assignments.active, true)
+      ];
+
+      if (date) {
+        // Create UTC date range for the specified date
+        const startOfDay = new Date(date + 'T00:00:00.000Z');
+        const endOfDay = new Date(date + 'T23:59:59.999Z');
+
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Date filter:`, {
+          date,
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString()
+        });
+
+        whereConditions.push(
+          gte(schema.assignments.startTime, startOfDay),
+          lte(schema.assignments.startTime, endOfDay)
+        );
+      }
+
+      const query = db
         .select({
           id: schema.assignments.id,
           studentId: schema.assignments.studentId,
@@ -46,30 +69,7 @@ export async function GET(request: Request) {
         })
         .from(schema.assignments)
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
-        .where(and(
-          eq(schema.assignments.studentId, studentId),
-          eq(schema.assignments.active, true)
-        ));
-
-      if (date) {
-        // Create UTC date range for the specified date
-        const startOfDay = new Date(date + 'T00:00:00.000Z');
-        const endOfDay = new Date(date + 'T23:59:59.999Z');
-
-        console.log(`[ASSIGNMENTS-API] ${timestamp} - Date filter:`, {
-          date,
-          startOfDay: startOfDay.toISOString(),
-          endOfDay: endOfDay.toISOString()
-        });
-
-        // Add date filtering to existing query
-        query = query.where(and(
-          eq(schema.assignments.studentId, studentId),
-          eq(schema.assignments.active, true),
-          gte(schema.assignments.startTime, startOfDay),
-          lte(schema.assignments.startTime, endOfDay)
-        ));
-      }
+        .where(and(...whereConditions));
 
       assignments = await query.orderBy(schema.assignments.startTime);
       console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for student ${studentId}`);
@@ -89,7 +89,30 @@ export async function GET(request: Request) {
 
       const studentIds = cohortStudents.map(s => s.id);
 
-      let query = db
+            // Build where conditions for cohort
+      const whereConditions = [
+        inArray(schema.assignments.studentId, studentIds),
+        eq(schema.assignments.active, true)
+      ];
+
+      if (date) {
+        // Create UTC date range for the specified date
+        const startOfDay = new Date(date + 'T00:00:00.000Z');
+        const endOfDay = new Date(date + 'T23:59:59.999Z');
+
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Cohort date filter:`, {
+          date,
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString()
+        });
+
+        whereConditions.push(
+          gte(schema.assignments.startTime, startOfDay),
+          lte(schema.assignments.startTime, endOfDay)
+        );
+      }
+
+      const query = db
         .select({
           id: schema.assignments.id,
           studentId: schema.assignments.studentId,
@@ -109,30 +132,7 @@ export async function GET(request: Request) {
         })
         .from(schema.assignments)
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
-        .where(and(
-          inArray(schema.assignments.studentId, studentIds),
-          eq(schema.assignments.active, true)
-        ));
-
-      if (date) {
-        // Create UTC date range for the specified date
-        const startOfDay = new Date(date + 'T00:00:00.000Z');
-        const endOfDay = new Date(date + 'T23:59:59.999Z');
-
-        console.log(`[ASSIGNMENTS-API] ${timestamp} - Cohort date filter:`, {
-          date,
-          startOfDay: startOfDay.toISOString(),
-          endOfDay: endOfDay.toISOString()
-        });
-
-        // Add date filtering to existing query
-        query = query.where(and(
-          inArray(schema.assignments.studentId, studentIds),
-          eq(schema.assignments.active, true),
-          gte(schema.assignments.startTime, startOfDay),
-          lte(schema.assignments.startTime, endOfDay)
-        ));
-      }
+        .where(and(...whereConditions));
 
       assignments = await query.orderBy(schema.assignments.startTime);
       console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for cohort ${cohortId}`);
@@ -155,15 +155,23 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const timestamp = new Date().toISOString();
+  console.log(`[ASSIGNMENTS-API] ${timestamp} - POST request started`);
+  
+  let body: any;
+  
   try {
-    const body = await request.json();
+    body = await request.json();
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - Request body:`, JSON.stringify(body, null, 2));
+    
     const {
       studentId,
-      classId, // for existing class assignments
+      classId, // RESTORED for class assignments
       eventType,
       eventTitle,
       location,
       startTime,
+      endTime, // optional - for imports (e.g., Google Sheets)
       duration,
       recurrence,
       recurrenceEndDate,
@@ -172,117 +180,133 @@ export async function POST(request: Request) {
       pointOfContact
     } = body;
 
-    // Calculate end time
-    const start = new Date(startTime);
-    const end = new Date(start.getTime() + (duration * 60000)); // duration is in minutes
+    // Flexible time calculation - support multiple input scenarios
+    let finalStartTime: Date;
+    let finalEndTime: Date;
+    let finalDuration: number;
 
-    // Get student with program info for class creation
+    if (startTime && endTime) {
+      // Import scenario: Both start and end time provided (e.g., Google Sheets import)
+      finalStartTime = new Date(startTime);
+      finalEndTime = new Date(endTime);
+      finalDuration = Math.round((finalEndTime.getTime() - finalStartTime.getTime()) / 60000); // Calculate duration in minutes
+      
+      // Validate calculated duration
+      if (finalDuration < 1 || finalDuration > 720) {
+        return NextResponse.json({ 
+          error: 'Calculated duration must be between 1 and 720 minutes',
+          calculatedDuration: finalDuration 
+        }, { status: 400 });
+      }
+    } else if (startTime && duration) {
+      // Manual entry scenario: Start time and duration provided
+      finalStartTime = new Date(startTime);
+      finalDuration = duration;
+      finalEndTime = new Date(finalStartTime.getTime() + (finalDuration * 60000));
+      
+      // Validate provided duration
+      if (finalDuration < 1 || finalDuration > 720) {
+        return NextResponse.json({ 
+          error: 'Duration must be between 1 and 720 minutes' 
+        }, { status: 400 });
+      }
+    } else {
+      return NextResponse.json({ 
+        error: 'Either (startTime + duration) or (startTime + endTime) must be provided' 
+      }, { status: 400 });
+    }
+
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - Time calculation completed:`, {
+      startTime: finalStartTime.toISOString(),
+      endTime: finalEndTime.toISOString(),
+      duration: finalDuration,
+      calculationMethod: endTime ? 'endTime-derived' : 'duration-based'
+    });
+
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - Fetching student details for ID: ${studentId}`);
+
+    // Get student details - simplified query without problematic relations
     const student = await db.query.students.findFirst({
       where: eq(schema.students.id, studentId),
       columns: { 
         organizationId: true, 
         program: true
-      },
-      with: {
-        cohort: {
-          with: {
-            program: true
-          }
-        }
       }
     });
 
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - Student lookup result:`, student ? 'Found' : 'Not found');
+
     if (!student) {
+      console.log(`[ASSIGNMENTS-API] ${timestamp} - Student not found for ID: ${studentId}`);
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    let finalClassId = classId;
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - Student found:`, {
+      organizationId: student.organizationId,
+      program: student.program
+    });
 
-    // If this is an Academic or Elective assignment, handle class creation/linking
-    if ((eventType === 'Academic' || eventType === 'Elective') && !classId) {
-      // Get program ID - first try cohort's program, then fall back to a program lookup
-      let programId = student.cohort?.program?.id;
-      
-      if (!programId && student.program) {
-        // Look up program by name if not available through cohort
-        const program = await db.query.programs.findFirst({
-          where: and(
-            eq(schema.programs.name, student.program),
-            eq(schema.programs.organizationId, student.organizationId),
-            eq(schema.programs.active, true)
-          )
-        });
-        programId = program?.id;
-      }
+    // TEMPORARILY COMMENTED OUT CLASS LOGIC FOR TESTING
+    // let finalClassId = classId;
+    // if ((eventType === 'Academic' || eventType === 'Elective') && !classId) {
+    //   ... class creation logic ...
+    // }
+    let finalClassId = null; // TEMPORARILY SET TO NULL
 
-      if (!programId) {
-        return NextResponse.json({ 
-          error: 'Unable to determine student program for class creation' 
-        }, { status: 400 });
-      }
-
-      // Check if class already exists
-      const existingClass = await db.query.classes.findFirst({
-        where: and(
-          eq(schema.classes.name, eventTitle),
-          eq(schema.classes.eventType, eventType),
-          eq(schema.classes.programId, programId),
-          eq(schema.classes.organizationId, student.organizationId),
-          eq(schema.classes.active, true)
-        )
-      });
-
-      if (existingClass) {
-        finalClassId = existingClass.id;
-      } else {
-        // Create new class - we'll update it with assignmentId after assignment creation
-        const [newClass] = await db.insert(schema.classes).values({
-          name: eventTitle,
-          eventType,
-          programId,
-          location,
-          defaultDuration: duration,
-          organizationId: student.organizationId,
-        }).returning();
-
-        finalClassId = newClass.id;
-      }
-    }
-
-    // Create the assignment
-    const [newAssignment] = await db.insert(schema.assignments).values({
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - Creating assignment with values:`, {
       studentId,
-      classId: finalClassId || null,
+      classId: finalClassId,
       eventType,
       eventTitle,
       location,
-      startTime: start,
-      duration,
-      endTime: end,
+      startTime: finalStartTime.toISOString(),
+      duration: finalDuration,
+      endTime: finalEndTime.toISOString(),
+      organizationId: student.organizationId
+    });
+    
+    // Create the assignment with classId support
+    const [newAssignment] = await db.insert(schema.assignments).values({
+      studentId,
+      classId: classId || null, // RESTORED classId field
+      eventType,
+      eventTitle,
+      location,
+      startTime: finalStartTime,
+      duration: finalDuration,
+      endTime: finalEndTime,
       recurrence: recurrence || 'None',
       recurrenceEndDate: recurrenceEndDate ? new Date(recurrenceEndDate) : null,
-      notes,
+      notes: notes || null,
       responsibleParty,
-      pointOfContact,
+      pointOfContact: pointOfContact || null,
       organizationId: student.organizationId,
     }).returning();
 
-    // If we created a new class and this is the original assignment, update the class's assignmentId
-    if (finalClassId && (eventType === 'Academic' || eventType === 'Elective')) {
-      const classToUpdate = await db.query.classes.findFirst({
-        where: eq(schema.classes.id, finalClassId)
-      });
-      
-      if (classToUpdate && !classToUpdate.assignmentId) {
-        await db.update(schema.classes)
-          .set({ assignmentId: newAssignment.id })
-          .where(eq(schema.classes.id, finalClassId));
-      }
-    }
+        // TEMPORARILY COMMENTED OUT CLASS UPDATE LOGIC
+    // if (finalClassId && (eventType === 'Academic' || eventType === 'Elective')) {
+    //   ... class update logic ...
+    // }
 
     return NextResponse.json(newAssignment, { status: 201 });
-  } catch (error) {
-    console.error('Database insert error:', error);
-    return NextResponse.json({ error: 'Failed to create assignment' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[ASSIGNMENTS-API] ERROR CAUGHT:', error);
+    console.error('[ASSIGNMENTS-API] Error message:', error?.message);
+    console.error('[ASSIGNMENTS-API] Error stack:', error?.stack);
+    console.error('[ASSIGNMENTS-API] Error name:', error?.name);
+    console.error('[ASSIGNMENTS-API] Error code:', error?.code);
+    console.error('[ASSIGNMENTS-API] Error detail:', error?.detail);
+    console.error('[ASSIGNMENTS-API] Error constraint:', error?.constraint);
+    console.error('[ASSIGNMENTS-API] Request body was:', JSON.stringify(body || {}, null, 2));
+    
+    return NextResponse.json({ 
+      error: 'Failed to create assignment',
+      details: error?.message || 'Unknown error',
+      errorName: error?.name || 'Unknown',
+      code: error?.code,
+      detail: error?.detail,
+      constraint: error?.constraint,
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }

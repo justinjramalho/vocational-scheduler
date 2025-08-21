@@ -22,6 +22,27 @@
       "when": 1755800452543,
       "tag": "0002_fuzzy_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1755815111568,
+      "tag": "0003_misty_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1755815397107,
+      "tag": "0004_spooky_the_liberteens",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1755817144494,
+      "tag": "0005_military_viper",
+      "breakpoints": true
     }
   ]
 }

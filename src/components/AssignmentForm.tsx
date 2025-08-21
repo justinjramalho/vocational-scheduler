@@ -161,8 +161,8 @@ export default function AssignmentForm({
     if (!formData.eventTitle) newErrors.eventTitle = 'Event title is required';
     if (!formData.location) newErrors.location = 'Location is required';
     if (!formData.startTime) newErrors.startTime = 'Start time is required';
-    if (!formData.duration || formData.duration <= 0) {
-      newErrors.duration = 'Duration must be greater than 0';
+    if (!formData.duration || formData.duration < 1 || formData.duration > 720) {
+      newErrors.duration = 'Duration must be between 1 and 720 minutes';
     }
     if (!formData.responsibleParty) {
       newErrors.responsibleParty = 'Responsible party is required';
@@ -234,13 +234,22 @@ export default function AssignmentForm({
   };
 
   const incrementDuration = () => {
-    setFormData(prev => ({ ...prev, duration: prev.duration + 15 }));
+    if (formData.duration < 720) {
+      setFormData(prev => ({ ...prev, duration: prev.duration + 1 }));
+    }
   };
 
   const decrementDuration = () => {
-    if (formData.duration > 15) {
-      setFormData(prev => ({ ...prev, duration: prev.duration - 15 }));
+    if (formData.duration > 1) {
+      setFormData(prev => ({ ...prev, duration: prev.duration - 1 }));
     }
+  };
+
+  const handleDurationChange = (value: string) => {
+    const numValue = parseInt(value) || 0;
+    // Clamp value between 1 and 720 minutes (12 hours)
+    const clampedValue = Math.max(1, Math.min(720, numValue));
+    handleInputChange('duration', clampedValue);
   };
 
   return (
@@ -457,9 +466,11 @@ export default function AssignmentForm({
                   type="number"
                   id="duration"
                   value={formData.duration}
-                  onChange={(e) => handleInputChange('duration', parseInt(e.target.value) || 0)}
-                  min="15"
-                  step="15"
+                  onChange={(e) => handleDurationChange(e.target.value)}
+                  min="1"
+                  max="720"
+                  step="1"
+                  placeholder="60"
                   className={`w-full px-3 py-2 border-t border-b border-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.duration ? 'border-red-300' : ''
                   }`}

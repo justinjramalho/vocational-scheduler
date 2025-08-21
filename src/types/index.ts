@@ -85,6 +85,7 @@ export interface AssignmentFormData {
   eventTitle: string;
   location: string;
   startTime: string; // ISO date string for form inputs
+  endTime?: string; // optional - for imports (e.g., Google Sheets)
   duration: number;
   recurrence: RecurrenceType;
   recurrenceEndDate: string; // ISO date string for form inputs
