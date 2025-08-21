@@ -104,7 +104,17 @@ export default function StudentModal({
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.studentId.trim()) newErrors.studentId = 'Student ID is required';
-    if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Emergency contact is required';
+    
+    // Emergency contact validation
+    if (!formData.emergencyContact.trim()) {
+      newErrors.emergencyContact = 'Emergency contact is required';
+    } else {
+      // Check format: "Name (Relationship) - XXX-XXX-XXXX"
+      const emergencyContactPattern = /^.+\s*\(.+\)\s*-\s*\d{3}-\d{3}-\d{4}$/;
+      if (!emergencyContactPattern.test(formData.emergencyContact)) {
+        newErrors.emergencyContact = 'Format should be: "Name (Relationship) - XXX-XXX-XXXX"';
+      }
+    }
     
     // Required for Google Classroom integration
     if (!formData.email.trim()) {

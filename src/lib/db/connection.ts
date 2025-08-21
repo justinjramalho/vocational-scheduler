@@ -211,7 +211,7 @@ export async function initializeDatabase() {
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[0].id,
         organizationId: demoOrg.id,
-        emergencyContact: 'Mary Johnson (Mother) - 555-0101',
+        emergencyContact: 'Mary Johnson (Mother) - 908-555-0101',
         active: true
       },
       {
@@ -223,7 +223,7 @@ export async function initializeDatabase() {
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[0].id,
         organizationId: demoOrg.id,
-        emergencyContact: 'David Brown (Father) - 555-0102',
+        emergencyContact: 'David Brown (Father) - 908-555-0102',
         active: true
       },
       {
@@ -235,7 +235,7 @@ export async function initializeDatabase() {
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[0].id,
         organizationId: demoOrg.id,
-        emergencyContact: 'Lisa Davis (Mother) - 555-0103',
+        emergencyContact: 'Lisa Davis (Mother) - 908-555-0103',
         active: true
       },
       // Cohort B students
@@ -248,7 +248,7 @@ export async function initializeDatabase() {
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[1].id,
         organizationId: demoOrg.id,
-        emergencyContact: 'Jennifer Smith (Guardian) - 555-0104',
+        emergencyContact: 'Jennifer Smith (Guardian) - 908-555-0104',
         active: true
       },
       {
@@ -260,7 +260,7 @@ export async function initializeDatabase() {
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[1].id,
         organizationId: demoOrg.id,
-        emergencyContact: 'Robert Wilson (Father) - 555-0105',
+        emergencyContact: 'Robert Wilson (Father) - 908-555-0105',
         active: true
       },
       {
@@ -272,7 +272,7 @@ export async function initializeDatabase() {
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[1].id,
         organizationId: demoOrg.id,
-        emergencyContact: 'Carmen Martinez (Mother) - 555-0106',
+        emergencyContact: 'Carmen Martinez (Mother) - 908-555-0106',
         active: true
       }
     ]).returning();
