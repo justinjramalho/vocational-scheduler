@@ -35,7 +35,7 @@ export async function initializeDatabase() {
       if (existingUser) {
         DEFAULT_USER_ID = existingUser.id;
       }
-      
+
       console.log('Demo School District already exists, using existing data');
       return true;
     }
@@ -51,7 +51,7 @@ export async function initializeDatabase() {
         timezone: 'America/New_York',
         schoolYear: '2024-2025'
       }
-    }).returning();
+        }).returning();
 
     DEFAULT_ORG_ID = demoOrg.id;
 
@@ -96,7 +96,7 @@ export async function initializeDatabase() {
       name: 'SPED Vocation Program',
       organizationId: demoOrg.id,
       description: 'Special Education Vocational Training Program'
-    }).returning();
+        }).returning();
 
     // Create 10 classes (Academic, Elective, Vocational)
     const demoClasses = await db.insert(schema.classes).values([
@@ -172,7 +172,7 @@ export async function initializeDatabase() {
         type: 'Vocational',
         organizationId: demoOrg.id,
         teacherId: demoUsers[2].id,
-        room: 'Kitchen Lab',
+          room: 'Kitchen Lab',
         schedule: 'MWF 2:00-4:00'
       },
       {
@@ -202,9 +202,9 @@ export async function initializeDatabase() {
     // Create 6 students split between cohorts
     const demoStudents = await db.insert(schema.students).values([
       // Cohort A students
-      {
-        firstName: 'Emma',
-        lastName: 'Johnson',
+          {
+            firstName: 'Emma',
+            lastName: 'Johnson',
         studentId: 'ST001',
         email: 'emma.johnson@demoschool.edu',
         grade: 'Transition Year 2',
@@ -213,10 +213,10 @@ export async function initializeDatabase() {
         organizationId: demoOrg.id,
         emergencyContact: 'Mary Johnson (Mother) - 908-555-0101',
         active: true
-      },
-      {
-        firstName: 'Michael',
-        lastName: 'Brown',
+          },
+          {
+            firstName: 'Michael',
+            lastName: 'Brown',
         studentId: 'ST002',
         email: 'michael.brown@demoschool.edu',
         grade: 'Post-Secondary Year 1',
@@ -225,10 +225,10 @@ export async function initializeDatabase() {
         organizationId: demoOrg.id,
         emergencyContact: 'David Brown (Father) - 908-555-0102',
         active: true
-      },
-      {
-        firstName: 'Sophia',
-        lastName: 'Davis',
+          },
+          {
+            firstName: 'Sophia',
+            lastName: 'Davis',
         studentId: 'ST003',
         email: 'sophia.davis@demoschool.edu',
         grade: 'Transition Year 3',
@@ -242,7 +242,7 @@ export async function initializeDatabase() {
       {
         firstName: 'John',
         lastName: 'Smith',
-        studentId: 'ST004',
+            studentId: 'ST004',
         email: 'john.smith@demoschool.edu',
         grade: 'Transition Year 1',
         program: 'SPED Vocation Program',

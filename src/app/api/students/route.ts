@@ -114,6 +114,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!program || !program.trim()) {
+      return NextResponse.json(
+        { error: 'Program is required' },
+        { status: 400 }
+      );
+    }
+
     // Insert new student
     const [newStudent] = await db.insert(students).values({
       firstName,

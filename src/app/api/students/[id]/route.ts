@@ -111,6 +111,13 @@ export async function PUT(request: NextRequest, { params }: Props) {
       );
     }
 
+    if (!program || !program.trim()) {
+      return NextResponse.json(
+        { error: 'Program is required' },
+        { status: 400 }
+      );
+    }
+
     // Update student
     const [updatedStudent] = await db.update(students)
       .set({
