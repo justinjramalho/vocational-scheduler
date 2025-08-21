@@ -71,6 +71,11 @@ export const classes = pgTable('classes', {
   duration: varchar('duration', { length: 50 }), // e.g., "1 semester", "Full year"
   color: varchar('color', { length: 7 }).default('#3B82F6'), // hex color for UI
   academicYear: varchar('academic_year', { length: 20 }),
+  eventType: varchar('event_type', { length: 50 }), // Academic, Elective (for class assignments)
+  programId: uuid('program_id').references(() => programs.id), // scoped to program for uniqueness
+  assignmentId: uuid('assignment_id'), // original assignment that created this class (FK resolved after assignments table)
+  location: varchar('location', { length: 255 }), // default location for this class
+  defaultDuration: integer('default_duration'), // default duration in minutes
   organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
   createdBy: uuid('created_by').references(() => users.id),
   active: boolean('active').default(true).notNull(),
@@ -79,6 +84,8 @@ export const classes = pgTable('classes', {
 }, (table) => ({
   orgIdx: index('class_org_idx').on(table.organizationId),
   codeIdx: index('class_code_idx').on(table.code),
+  programIdx: index('class_program_idx').on(table.programId),
+  assignmentIdx: index('class_assignment_idx').on(table.assignmentId),
 }));
 
 // Student Cohorts/Groups (tied to Programs, not Classes)
@@ -127,6 +134,7 @@ export const students = pgTable('students', {
 export const assignments = pgTable('assignments', {
   id: uuid('id').defaultRandom().primaryKey(),
   studentId: uuid('student_id').references(() => students.id).notNull(),
+  classId: uuid('class_id').references(() => classes.id), // nullable - only for Academic/Elective assignments
   eventType: varchar('event_type', { length: 50 }).notNull(), // Academic, Therapy, etc.
   eventTitle: varchar('event_title', { length: 255 }).notNull(),
   location: varchar('location', { length: 255 }).notNull(),
@@ -145,6 +153,7 @@ export const assignments = pgTable('assignments', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   studentIdx: index('assignment_student_idx').on(table.studentId),
+  classIdx: index('assignment_class_idx').on(table.classId),
   orgIdx: index('assignment_org_idx').on(table.organizationId),
   startTimeIdx: index('assignment_start_time_idx').on(table.startTime),
 }));

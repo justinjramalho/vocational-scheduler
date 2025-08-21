@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AssignmentFormData, EventType, RecurrenceType, Student } from '@/types';
+import { AssignmentFormData, EventType, RecurrenceType, Student, Class } from '@/types';
 
 interface AssignmentFormProps {
   onSubmit: (data: AssignmentFormData) => void;
@@ -20,6 +20,7 @@ export default function AssignmentForm({
 }: AssignmentFormProps) {
   const [formData, setFormData] = useState<AssignmentFormData>({
     studentId: '',
+    classId: '',
     eventType: '',
     eventTitle: '',
     location: '',
@@ -38,6 +39,10 @@ export default function AssignmentForm({
   };
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [showNewClassTitle, setShowNewClassTitle] = useState(false);
 
   // Reset form when initialData changes
   useEffect(() => {
@@ -45,6 +50,55 @@ export default function AssignmentForm({
       setFormData(prev => ({ ...prev, ...initialData }));
     }
   }, [initialData]);
+
+  // Fetch available classes when student and event type change
+  useEffect(() => {
+    const fetchClasses = async () => {
+      if (!formData.studentId || !formData.eventType || 
+          (formData.eventType !== 'Academic' && formData.eventType !== 'Elective')) {
+        setAvailableClasses([]);
+        setSelectedClass(null);
+        setShowNewClassTitle(false);
+        return;
+      }
+
+      setLoadingClasses(true);
+      try {
+        const selectedStudent = students.find(s => s.id === formData.studentId);
+        if (!selectedStudent) {
+          setAvailableClasses([]);
+          return;
+        }
+
+        // Get the student's program information to fetch relevant classes
+        const response = await fetch(`/api/students/${formData.studentId}`);
+        if (response.ok) {
+          const studentDetails = await response.json();
+          const programId = studentDetails.cohort?.programId || null;
+          
+          if (programId) {
+            // Fetch classes for this program
+            const classesResponse = await fetch(`/api/classes?programId=${programId}`);
+            if (classesResponse.ok) {
+              const classes: Class[] = await classesResponse.json();
+              // Filter classes by event type
+              const filteredClasses = classes.filter(c => 
+                c.eventType === formData.eventType && c.active
+              );
+              setAvailableClasses(filteredClasses);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching classes:', error);
+        setAvailableClasses([]);
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+
+    fetchClasses();
+  }, [formData.studentId, formData.eventType, students]);
 
   const eventTypeOptions: EventType[] = [
     'Academic',
@@ -105,6 +159,43 @@ export default function AssignmentForm({
     }
   };
 
+  const handleClassSelection = (value: string) => {
+    if (value === 'new') {
+      // Create new class
+      setSelectedClass(null);
+      setShowNewClassTitle(true);
+      setFormData(prev => ({ 
+        ...prev, 
+        classId: '',
+        eventTitle: ''
+      }));
+    } else if (value === '') {
+      // No selection
+      setSelectedClass(null);
+      setShowNewClassTitle(false);
+      setFormData(prev => ({ 
+        ...prev, 
+        classId: '',
+        eventTitle: ''
+      }));
+    } else {
+      // Existing class selected
+      const selectedClass = availableClasses.find(c => c.id === value);
+      if (selectedClass) {
+        setSelectedClass(selectedClass);
+        setShowNewClassTitle(false);
+        // Auto-populate form fields from class
+        setFormData(prev => ({
+          ...prev,
+          classId: selectedClass.id,
+          eventTitle: selectedClass.name,
+          location: selectedClass.location || prev.location,
+          duration: selectedClass.defaultDuration || prev.duration
+        }));
+      }
+    }
+  };
+
   const incrementDuration = () => {
     setFormData(prev => ({ ...prev, duration: prev.duration + 15 }));
   };
@@ -153,7 +244,7 @@ export default function AssignmentForm({
           {/* Spacer */}
           <div className="h-4"></div>
 
-          {/* Event Type & Title */}
+          {/* Event Type & Title/Class Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="eventType" className="block text-sm font-medium text-gray-700 mb-1">
@@ -180,17 +271,74 @@ export default function AssignmentForm({
             </div>
 
             <div>
-              <label htmlFor="eventTitle" className="block text-sm font-medium text-gray-700 mb-1">
-                Event Title *
+              {(formData.eventType === 'Academic' || formData.eventType === 'Elective') ? (
+                // Class dropdown for Academic/Elective
+                <>
+                  <label htmlFor="classSelection" className="block text-sm font-medium text-gray-700 mb-1">
+                    Program Classes *
+                  </label>
+                  <select
+                    id="classSelection"
+                    value={selectedClass?.id || (showNewClassTitle ? 'new' : '')}
+                    onChange={(e) => handleClassSelection(e.target.value)}
+                    disabled={!formData.eventType || !formData.studentId || loadingClasses}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                      errors.eventTitle ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Select a class</option>
+                    <option value="new">📝 Create New Class</option>
+                    {availableClasses.map((cls) => (
+                      <option key={cls.id} value={cls.id}>
+                        {cls.name} ({cls.programName || 'Unknown Program'})
+                      </option>
+                    ))}
+                  </select>
+                  {loadingClasses && (
+                    <p className="mt-1 text-sm text-gray-500">Loading available classes...</p>
+                  )}
+                  {errors.eventTitle && (
+                    <p className="mt-1 text-sm text-red-600">{errors.eventTitle}</p>
+                  )}
+                </>
+              ) : (
+                // Regular event title input for other types
+                <>
+                  <label htmlFor="eventTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Title *
+                  </label>
+                  <input
+                    type="text"
+                    id="eventTitle"
+                    value={formData.eventTitle}
+                    onChange={(e) => handleInputChange('eventTitle', e.target.value)}
+                    disabled={!formData.eventType}
+                    placeholder="Enter event title"
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                      errors.eventTitle ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.eventTitle && (
+                    <p className="mt-1 text-sm text-red-600">{errors.eventTitle}</p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* New Class Title Input - only show when creating new class */}
+          {showNewClassTitle && (
+            <div className="mt-4">
+              <label htmlFor="newClassTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                New Class Title *
               </label>
               <input
                 type="text"
-                id="eventTitle"
+                id="newClassTitle"
                 value={formData.eventTitle}
                 onChange={(e) => handleInputChange('eventTitle', e.target.value)}
-                disabled={!formData.eventType}
-                placeholder="Enter event title"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                placeholder="Enter new class title"
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   errors.eventTitle ? 'border-red-300' : 'border-gray-300'
                 }`}
               />
@@ -198,16 +346,14 @@ export default function AssignmentForm({
                 <p className="mt-1 text-sm text-red-600">{errors.eventTitle}</p>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Dynamic Class Title Label for Academic/Elective */}
-          {(formData.eventType === 'Academic' || formData.eventType === 'Elective') && (
-            <div className="mt-4 mb-2">
+          {/* Dynamic Class Title Label - only show for new class creation */}
+          {showNewClassTitle && formData.eventTitle && (
+            <div className="mt-2 mb-2">
               <div className="text-sm text-gray-700">
                 <span className="font-bold">Class Title:</span>
-                {formData.eventTitle && (
-                  <span className="ml-1">"{formData.eventTitle}"</span>
-                )}
+                <span className="ml-1">"{formData.eventTitle}"</span>
               </div>
             </div>
           )}

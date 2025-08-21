@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, DEFAULT_ORG_ID, DEFAULT_USER_ID, initializeDatabase } from '@/lib/db/connection';
-import { classes, cohorts, students } from '@/lib/db/schema';
+import { classes, cohorts, students, programs } from '@/lib/db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
-// GET /api/classes - Get all classes/programs
-export async function GET() {
+// GET /api/classes?programId=xxx - Get classes, optionally filtered by program
+export async function GET(request: NextRequest) {
   try {
     // Initialize database if needed
     await initializeDatabase();
@@ -15,6 +15,19 @@ export async function GET() {
         { error: 'Database not initialized. Please call /api/init first.' },
         { status: 503 }
       );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const programId = searchParams.get('programId');
+
+    // Build where conditions
+    const whereConditions = [
+      eq(classes.organizationId, DEFAULT_ORG_ID),
+      eq(classes.active, true)
+    ];
+
+    if (programId) {
+      whereConditions.push(eq(classes.programId, programId));
     }
 
     const classesWithCounts = await db
@@ -28,13 +41,20 @@ export async function GET() {
         duration: classes.duration,
         color: classes.color,
         academicYear: classes.academicYear,
+        eventType: classes.eventType,
+        programId: classes.programId,
+        assignmentId: classes.assignmentId,
+        location: classes.location,
+        defaultDuration: classes.defaultDuration,
         active: classes.active,
         createdAt: classes.createdAt,
         updatedAt: classes.updatedAt,
+        programName: programs.name,
         cohortCount: sql<number>`COUNT(DISTINCT ${cohorts.id})::int`,
         studentCount: sql<number>`COUNT(DISTINCT ${students.id})::int`,
       })
       .from(classes)
+      .leftJoin(programs, eq(classes.programId, programs.id))
       .leftJoin(cohorts, and(
         eq(classes.id, cohorts.classId),
         eq(cohorts.active, true)
@@ -43,11 +63,8 @@ export async function GET() {
         eq(classes.id, students.classId),
         eq(students.active, true)
       ))
-      .where(and(
-        eq(classes.organizationId, DEFAULT_ORG_ID),
-        eq(classes.active, true)
-      ))
-      .groupBy(classes.id)
+      .where(and(...whereConditions))
+      .groupBy(classes.id, programs.name)
       .orderBy(desc(classes.createdAt));
 
     return NextResponse.json(classesWithCounts);
@@ -60,7 +77,7 @@ export async function GET() {
   }
 }
 
-// POST /api/classes - Create a new class/program
+// POST /api/classes - Create a new class from assignment data
 export async function POST(request: NextRequest) {
   try {
     // Initialize database if needed
@@ -77,12 +94,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     const {
-      name,
+      name, // class title from assignment
+      eventType, // Academic or Elective
+      programId, // from student's program
+      assignmentId, // reference to original assignment
+      location, // from assignment
+      defaultDuration, // from assignment duration
       description,
       code,
       department,
       credits,
-      duration,
       color,
       academicYear
     } = body;
@@ -95,9 +116,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!eventType || (eventType !== 'Academic' && eventType !== 'Elective')) {
+      return NextResponse.json(
+        { error: 'Event type must be Academic or Elective for class creation' },
+        { status: 400 }
+      );
+    }
+
+    if (!programId) {
+      return NextResponse.json(
+        { error: 'Program ID is required for class creation' },
+        { status: 400 }
+      );
+    }
+
+    // Check if class already exists (name + eventType + programId)
+    const existingClass = await db
+      .select()
+      .from(classes)
+      .where(and(
+        eq(classes.name, name),
+        eq(classes.eventType, eventType),
+        eq(classes.programId, programId),
+        eq(classes.organizationId, DEFAULT_ORG_ID),
+        eq(classes.active, true)
+      ))
+      .limit(1);
+
+    if (existingClass.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Class already exists',
+          existingClass: existingClass[0]
+        },
+        { status: 409 }
+      );
+    }
+
     // Insert new class
     const [newClass] = await db.insert(classes).values({
       name,
+      eventType,
+      programId,
+      assignmentId: assignmentId || null,
+      location: location || null,
+      defaultDuration: defaultDuration || null,
       description: description || null,
       code: code || null,
       department: department || null,

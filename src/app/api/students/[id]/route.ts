@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, DEFAULT_ORG_ID, initializeDatabase } from '@/lib/db/connection';
-import { students, cohorts } from '@/lib/db/schema';
+import { students, cohorts, programs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 interface Props {
@@ -34,6 +34,8 @@ export async function GET(request: NextRequest, { params }: Props) {
         program: students.program,
         cohortId: students.cohortId,
         cohortName: cohorts.name,
+        cohortProgramId: cohorts.programId,
+        cohortProgramName: programs.name,
         notes: students.notes,
         emergencyContact: students.emergencyContact,
         accommodations: students.accommodations,
@@ -43,6 +45,7 @@ export async function GET(request: NextRequest, { params }: Props) {
       })
       .from(students)
       .leftJoin(cohorts, eq(students.cohortId, cohorts.id))
+      .leftJoin(programs, eq(cohorts.programId, programs.id))
       .where(and(
         eq(students.id, id),
         eq(students.organizationId, DEFAULT_ORG_ID),
@@ -61,6 +64,12 @@ export async function GET(request: NextRequest, { params }: Props) {
       ...student[0],
       fullName: `${student[0].firstName} ${student[0].lastName}`,
       accommodations: Array.isArray(student[0].accommodations) ? student[0].accommodations : [],
+      cohort: student[0].cohortId ? {
+        id: student[0].cohortId,
+        name: student[0].cohortName,
+        programId: student[0].cohortProgramId,
+        programName: student[0].cohortProgramName
+      } : null
     };
 
     return NextResponse.json(response);

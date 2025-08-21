@@ -22,6 +22,7 @@ export interface Student {
 export interface Assignment {
   id: string;
   studentId: string;
+  classId?: string | null; // link to class if this is an Academic/Elective assignment
   studentName: string; // denormalized for easier display
   eventType: EventType;
   eventTitle: string;
@@ -52,9 +53,34 @@ export type RecurrenceType =
   | 'Weekly'
   | 'Monthly';
 
+// Class interface for Academic/Elective assignments
+export interface Class {
+  id: string;
+  name: string;
+  description?: string | null;
+  code?: string | null;
+  department?: string | null;
+  credits?: number | null;
+  duration?: string | null;
+  color: string;
+  academicYear?: string | null;
+  eventType?: EventType | null; // Academic or Elective
+  programId?: string | null;
+  programName?: string | null; // denormalized for display
+  assignmentId?: string | null; // original assignment that created this class
+  location?: string | null; // default location
+  defaultDuration?: number | null; // default duration in minutes
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  cohortCount?: number; // computed field
+  studentCount?: number; // computed field
+}
+
 // Form data interface for creating/editing assignments
 export interface AssignmentFormData {
   studentId: string;
+  classId?: string; // for existing class assignments
   eventType: EventType | '';
   eventTitle: string;
   location: string;

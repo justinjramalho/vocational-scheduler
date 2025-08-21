@@ -128,6 +128,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       studentId,
+      classId, // for existing class assignments
       eventType,
       eventTitle,
       location,
@@ -144,18 +145,83 @@ export async function POST(request: Request) {
     const start = new Date(startTime);
     const end = new Date(start.getTime() + (duration * 60000)); // duration is in minutes
 
-    // Get organization ID from student
+    // Get student with program info for class creation
     const student = await db.query.students.findFirst({
       where: eq(schema.students.id, studentId),
-      columns: { organizationId: true }
+      columns: { 
+        organizationId: true, 
+        program: true
+      },
+      with: {
+        cohort: {
+          with: {
+            program: true
+          }
+        }
+      }
     });
 
     if (!student) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
+    let finalClassId = classId;
+
+    // If this is an Academic or Elective assignment, handle class creation/linking
+    if ((eventType === 'Academic' || eventType === 'Elective') && !classId) {
+      // Get program ID - first try cohort's program, then fall back to a program lookup
+      let programId = student.cohort?.program?.id;
+      
+      if (!programId && student.program) {
+        // Look up program by name if not available through cohort
+        const program = await db.query.programs.findFirst({
+          where: and(
+            eq(schema.programs.name, student.program),
+            eq(schema.programs.organizationId, student.organizationId),
+            eq(schema.programs.active, true)
+          )
+        });
+        programId = program?.id;
+      }
+
+      if (!programId) {
+        return NextResponse.json({ 
+          error: 'Unable to determine student program for class creation' 
+        }, { status: 400 });
+      }
+
+      // Check if class already exists
+      const existingClass = await db.query.classes.findFirst({
+        where: and(
+          eq(schema.classes.name, eventTitle),
+          eq(schema.classes.eventType, eventType),
+          eq(schema.classes.programId, programId),
+          eq(schema.classes.organizationId, student.organizationId),
+          eq(schema.classes.active, true)
+        )
+      });
+
+      if (existingClass) {
+        finalClassId = existingClass.id;
+      } else {
+        // Create new class - we'll update it with assignmentId after assignment creation
+        const [newClass] = await db.insert(schema.classes).values({
+          name: eventTitle,
+          eventType,
+          programId,
+          location,
+          defaultDuration: duration,
+          organizationId: student.organizationId,
+        }).returning();
+
+        finalClassId = newClass.id;
+      }
+    }
+
+    // Create the assignment
     const [newAssignment] = await db.insert(schema.assignments).values({
       studentId,
+      classId: finalClassId || null,
       eventType,
       eventTitle,
       location,
@@ -169,6 +235,19 @@ export async function POST(request: Request) {
       pointOfContact,
       organizationId: student.organizationId,
     }).returning();
+
+    // If we created a new class and this is the original assignment, update the class's assignmentId
+    if (finalClassId && (eventType === 'Academic' || eventType === 'Elective')) {
+      const classToUpdate = await db.query.classes.findFirst({
+        where: eq(schema.classes.id, finalClassId)
+      });
+      
+      if (classToUpdate && !classToUpdate.assignmentId) {
+        await db.update(schema.classes)
+          .set({ assignmentId: newAssignment.id })
+          .where(eq(schema.classes.id, finalClassId));
+      }
+    }
 
     return NextResponse.json(newAssignment, { status: 201 });
   } catch (error) {
