@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { initializeDatabase, db, DEFAULT_ORG_ID } from '@/lib/db/connection';
-import { organizations, users, classes, cohorts, students, assignments } from '@/lib/db/schema';
+import { organizations, users, programs, classes, cohorts, students, assignments } from '@/lib/db/schema';
 import { eq, count } from 'drizzle-orm';
 
 // GET /api/init - Initialize database with demo data (for browser testing)
@@ -20,6 +20,9 @@ async function handleInit() {
     // Count actual data in the database
     const orgCount = await db.select({ count: count() }).from(organizations);
     const userCount = await db.select({ count: count() }).from(users);
+    const programCount = DEFAULT_ORG_ID ? 
+      await db.select({ count: count() }).from(programs).where(eq(programs.organizationId, DEFAULT_ORG_ID)) :
+      [{ count: 0 }];
     const classCount = DEFAULT_ORG_ID ? 
       await db.select({ count: count() }).from(classes).where(eq(classes.organizationId, DEFAULT_ORG_ID)) :
       [{ count: 0 }];
@@ -38,6 +41,7 @@ async function handleInit() {
       data: {
         organizations: orgCount[0]?.count || 0,
         users: userCount[0]?.count || 0,
+        programs: programCount[0]?.count || 0,
         classes: classCount[0]?.count || 0,
         cohorts: cohortCount[0]?.count || 0,
         students: studentCount[0]?.count || 0,

@@ -14,7 +14,16 @@ interface StudentModalProps {
 }
 
 const gradeOptions = [
-  '9th', '10th', '11th', '12th', 'Post-Secondary'
+  '9th', 
+  '10th', 
+  '11th', 
+  '12th', 
+  'Transition Year (1)', 
+  'Transition Year (2)', 
+  'Transition Year (3)', 
+  'Transition Year (4)', 
+  'Post-Secondary (Year 1)', 
+  'Post-Secondary (Year 2)'
 ];
 
 const commonAccommodations = [
@@ -47,6 +56,7 @@ export default function StudentModal({
     email: '',
     studentId: '',
     grade: '',
+    program: '',
     cohortId: '',
     notes: '',
     emergencyContact: '',
@@ -64,6 +74,7 @@ export default function StudentModal({
         email: student.email || '',
         studentId: student.studentId || '',
         grade: student.grade || '',
+        program: student.program || '',
         cohortId: student.cohortId || '',
         notes: student.notes || '',
         emergencyContact: student.emergencyContact || '',
@@ -76,6 +87,7 @@ export default function StudentModal({
         email: '',
         studentId: '',
         grade: '',
+        program: '',
         cohortId: '',
         notes: '',
         emergencyContact: '',
@@ -269,23 +281,32 @@ export default function StudentModal({
             </div>
 
             <div>
-              <label htmlFor="cohortId" className="block text-sm font-medium text-gray-700 mb-1">
-                Cohort/Class
+              <label htmlFor="program" className="block text-sm font-medium text-gray-700 mb-1">
+                Program
               </label>
-              <select
-                id="cohortId"
-                value={formData.cohortId}
-                onChange={(e) => handleInputChange('cohortId', e.target.value)}
+              <input
+                type="text"
+                id="program"
+                value={formData.program}
+                onChange={(e) => handleInputChange('program', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">No cohort assigned</option>
-                {cohorts.map(cohort => (
-                  <option key={cohort.id} value={cohort.id}>
-                    {cohort.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Enter program name"
+              />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="cohortId" className="block text-sm font-medium text-gray-700 mb-1">
+              Cohort
+            </label>
+            <input
+              type="text"
+              id="cohortId"
+              value={formData.cohortId}
+              onChange={(e) => handleInputChange('cohortId', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter cohort name"
+            />
           </div>
 
           {/* Emergency Contact */}
@@ -299,7 +320,7 @@ export default function StudentModal({
               value={formData.emergencyContact}
               onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Jane Smith (Mother) - 555-0123"
+              placeholder="Jane Smith (Mother) - 908-555-0123"
             />
           </div>
 

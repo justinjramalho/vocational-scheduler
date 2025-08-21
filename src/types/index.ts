@@ -8,6 +8,7 @@ export interface Student {
   email?: string | null;
   studentId?: string | null; // school ID number
   grade?: string | null;
+  program?: string | null; // student's program
   cohortId?: string | null; // assigned class/cohort
   cohortName?: string | null; // denormalized for display
   active: boolean;
@@ -87,6 +88,7 @@ export interface StudentFormData {
   email: string;
   studentId: string;
   grade: string;
+  program: string;
   cohortId: string;
   notes: string;
   emergencyContact: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, DEFAULT_ORG_ID, DEFAULT_USER_ID, initializeDatabase } from '@/lib/db/connection';
-import { classes, cohorts, students } from '@/lib/db/schema';
+import { programs, cohorts, students } from '@/lib/db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
 // GET /api/cohorts - Get all cohorts
@@ -22,22 +22,15 @@ export async function GET() {
         id: cohorts.id,
         name: cohorts.name,
         description: cohorts.description,
-        classId: cohorts.classId,
-        className: classes.name,
-        classCode: classes.code,
-        color: classes.color, // get color from parent class
-        teacherName: cohorts.teacherName,
-        room: cohorts.room,
-        schedule: cohorts.schedule,
-        maxStudents: cohorts.maxStudents,
-        academicYear: cohorts.academicYear,
+        programId: cohorts.programId,
+        programName: programs.name,
         active: cohorts.active,
         createdAt: cohorts.createdAt,
         updatedAt: cohorts.updatedAt,
         studentCount: sql<number>`COUNT(${students.id})::int`,
       })
       .from(cohorts)
-      .innerJoin(classes, eq(cohorts.classId, classes.id))
+      .innerJoin(programs, eq(cohorts.programId, programs.id))
       .leftJoin(students, and(
         eq(cohorts.id, students.cohortId),
         eq(students.active, true)
@@ -46,7 +39,7 @@ export async function GET() {
         eq(cohorts.organizationId, DEFAULT_ORG_ID),
         eq(cohorts.active, true)
       ))
-      .groupBy(cohorts.id, classes.id)
+      .groupBy(cohorts.id, programs.id)
       .orderBy(desc(cohorts.createdAt));
 
     // Transform to include studentIds array for compatibility
@@ -96,33 +89,28 @@ export async function POST(request: NextRequest) {
     const {
       name,
       description,
-      classId,
-      teacherName,
-      room,
-      schedule,
-      maxStudents,
-      academicYear
+      programId
     } = body;
 
     // Validate required fields
-    if (!name || !classId) {
+    if (!name || !programId) {
       return NextResponse.json(
-        { error: 'Cohort name and class ID are required' },
+        { error: 'Cohort name and program ID are required' },
         { status: 400 }
       );
     }
 
-    // Verify the class exists
-    const parentClass = await db.query.classes.findFirst({
+    // Verify the program exists
+    const parentProgram = await db.query.programs.findFirst({
       where: and(
-        eq(classes.id, classId),
-        eq(classes.organizationId, DEFAULT_ORG_ID)
+        eq(programs.id, programId),
+        eq(programs.organizationId, DEFAULT_ORG_ID)
       )
     });
 
-    if (!parentClass) {
+    if (!parentProgram) {
       return NextResponse.json(
-        { error: 'Class not found' },
+        { error: 'Program not found' },
         { status: 404 }
       );
     }
@@ -131,21 +119,14 @@ export async function POST(request: NextRequest) {
     const [newCohort] = await db.insert(cohorts).values({
       name,
       description: description || null,
-      classId,
-      teacherName: teacherName || null,
-      room: room || null,
-      schedule: schedule || null,
-      maxStudents: maxStudents || null,
-      academicYear: academicYear || null,
+      programId,
       organizationId: DEFAULT_ORG_ID,
       createdBy: DEFAULT_USER_ID,
     }).returning();
 
     const response = {
       ...newCohort,
-      className: parentClass.name,
-      classCode: parentClass.code,
-      color: parentClass.color,
+      programName: parentProgram.name,
       studentIds: [],
       studentCount: 0,
     };

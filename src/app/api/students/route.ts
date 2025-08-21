@@ -7,16 +7,20 @@ import { eq, and, desc } from 'drizzle-orm';
 export async function GET() {
   try {
     // Initialize database if needed
-    await initializeDatabase();
+    if (!DEFAULT_ORG_ID) {
+      await initializeDatabase();
+    }
     
+    // Double-check if constants are now available
     if (!DEFAULT_ORG_ID) {
       return NextResponse.json(
-        { error: 'Database not initialized' },
+        { error: 'Database initialization failed' },
         { status: 500 }
       );
     }
 
-    const studentsWithCohorts = await db
+    // Query students with all fields including program
+    const studentsData = await db
       .select({
         id: students.id,
         firstName: students.firstName,
@@ -24,8 +28,8 @@ export async function GET() {
         email: students.email,
         studentId: students.studentId,
         grade: students.grade,
+        program: students.program,
         cohortId: students.cohortId,
-        cohortName: cohorts.name,
         notes: students.notes,
         emergencyContact: students.emergencyContact,
         accommodations: students.accommodations,
@@ -34,12 +38,28 @@ export async function GET() {
         updatedAt: students.updatedAt,
       })
       .from(students)
-      .leftJoin(cohorts, eq(students.cohortId, cohorts.id))
       .where(and(
         eq(students.organizationId, DEFAULT_ORG_ID),
         eq(students.active, true)
       ))
       .orderBy(desc(students.createdAt));
+
+    // Then get cohort names separately
+    const studentsWithCohorts = await Promise.all(
+      studentsData.map(async (student) => {
+        let cohortName = null;
+        if (student.cohortId) {
+          const cohort = await db.query.cohorts.findFirst({
+            where: eq(cohorts.id, student.cohortId)
+          });
+          cohortName = cohort?.name || null;
+        }
+        return {
+          ...student,
+          cohortName,
+        };
+      })
+    );
 
     // Transform to match our existing interface
     const transformedStudents = studentsWithCohorts.map(student => ({
@@ -51,8 +71,10 @@ export async function GET() {
     return NextResponse.json(transformedStudents);
   } catch (error) {
     console.error('Error fetching students:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to fetch students' },
+      { error: 'Failed to fetch students', details: error.message },
       { status: 500 }
     );
   }
@@ -77,6 +99,7 @@ export async function POST(request: NextRequest) {
       email,
       studentId,
       grade,
+      program,
       cohortId,
       notes,
       emergencyContact,
@@ -98,7 +121,8 @@ export async function POST(request: NextRequest) {
       email: email || null,
       studentId: studentId || null,
       grade: grade || null,
-      cohortId: cohortId || null,
+      program: program || null,
+      cohortId: cohortId || null, // now stores cohort name directly
       notes: notes || null,
       emergencyContact: emergencyContact || null,
       accommodations: accommodations || [],

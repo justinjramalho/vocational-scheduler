@@ -45,6 +45,21 @@ export const users = pgTable('users', {
   orgIdx: index('user_org_idx').on(table.organizationId),
 }));
 
+// Programs (vocational training programs within organizations)
+export const programs = pgTable('programs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('program_org_idx').on(table.organizationId),
+  nameIdx: index('program_name_idx').on(table.name),
+}));
+
 // Classes/Programs (e.g., "Automotive Technology", "Culinary Arts")
 export const classes = pgTable('classes', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -66,17 +81,12 @@ export const classes = pgTable('classes', {
   codeIdx: index('class_code_idx').on(table.code),
 }));
 
-// Student Cohorts/Sections (e.g., "Period 1", "Morning Group A")
+// Student Cohorts/Groups (tied to Programs, not Classes)
 export const cohorts = pgTable('cohorts', {
   id: uuid('id').defaultRandom().primaryKey(),
-  name: varchar('name', { length: 255 }).notNull(), // e.g., "Period 1", "Morning Section"
+  name: varchar('name', { length: 255 }).notNull(), // e.g., "Cohort A", "Cohort B"
   description: text('description'),
-  classId: uuid('class_id').references(() => classes.id).notNull(), // belongs to a class
-  teacherName: varchar('teacher_name', { length: 255 }),
-  room: varchar('room', { length: 50 }), // classroom/lab room
-  schedule: varchar('schedule', { length: 100 }), // e.g., "Mon/Wed/Fri 9:00-11:00"
-  maxStudents: integer('max_students'), // capacity
-  academicYear: varchar('academic_year', { length: 20 }),
+  programId: uuid('program_id').references(() => programs.id).notNull(), // belongs to a program
   organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
   createdBy: uuid('created_by').references(() => users.id),
   active: boolean('active').default(true).notNull(),
@@ -84,7 +94,7 @@ export const cohorts = pgTable('cohorts', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   orgIdx: index('cohort_org_idx').on(table.organizationId),
-  classIdx: index('cohort_class_idx').on(table.classId),
+  programIdx: index('cohort_program_idx').on(table.programId),
 }));
 
 // Students
@@ -94,7 +104,8 @@ export const students = pgTable('students', {
   lastName: varchar('last_name', { length: 100 }).notNull(),
   email: varchar('email', { length: 255 }),
   studentId: varchar('student_id', { length: 50 }), // school ID
-  grade: varchar('grade', { length: 20 }),
+  grade: varchar('grade', { length: 50 }),
+  program: varchar('program', { length: 200 }), // student's program
   classId: uuid('class_id').references(() => classes.id), // primary class enrollment
   cohortId: uuid('cohort_id').references(() => cohorts.id), // section within the class
   notes: text('notes'),
