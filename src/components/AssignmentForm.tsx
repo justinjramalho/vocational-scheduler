@@ -200,6 +200,18 @@ export default function AssignmentForm({
             </div>
           </div>
 
+          {/* Dynamic Class Title Label for Academic/Elective */}
+          {(formData.eventType === 'Academic' || formData.eventType === 'Elective') && (
+            <div className="mt-4 mb-2">
+              <div className="text-sm text-gray-700">
+                <span className="font-bold">Class Title:</span>
+                {formData.eventTitle && (
+                  <span className="ml-1">"{formData.eventTitle}"</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Spacer */}
           <div className="h-4"></div>
 
