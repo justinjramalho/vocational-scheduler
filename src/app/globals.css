@@ -173,3 +173,71 @@ select {
 .text-gray-900 {
   color: #111827 !important; /* Ensures headings are visible */
 }
+
+/* Event Type Visual Themes - WCAG AA Compliant Colors */
+.event-type-academic {
+  @apply border-l-4 border-blue-600 bg-blue-50 text-blue-900;
+}
+
+.event-type-academic .event-badge {
+  @apply bg-blue-600 text-white;
+}
+
+.event-type-elective {
+  @apply border-l-4 border-green-600 bg-green-50 text-green-900;
+}
+
+.event-type-elective .event-badge {
+  @apply bg-green-600 text-white;
+}
+
+.event-type-therapy {
+  @apply border-l-4 border-purple-600 bg-purple-50 text-purple-900;
+}
+
+.event-type-therapy .event-badge {
+  @apply bg-purple-600 text-white;
+}
+
+.event-type-vocational {
+  @apply border-l-4 border-orange-600 bg-orange-50 text-orange-900;
+}
+
+.event-type-vocational .event-badge {
+  @apply bg-orange-600 text-white;
+}
+
+.event-type-testing {
+  @apply border-l-4 border-red-600 bg-red-50 text-red-900;
+}
+
+.event-type-testing .event-badge {
+  @apply bg-red-600 text-white;
+}
+
+.event-type-extra-curricular {
+  @apply border-l-4 border-pink-600 bg-pink-50 text-pink-900;
+}
+
+.event-type-extra-curricular .event-badge {
+  @apply bg-pink-600 text-white;
+}
+
+/* Event Card Base Styling */
+.event-card {
+  @apply rounded-lg p-4 mb-3 transition-colors duration-200;
+}
+
+.event-badge {
+  @apply px-2 py-1 rounded-full text-xs font-medium uppercase tracking-wide;
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+  .event-type-academic { @apply border-l-8 bg-white; }
+  .event-type-elective { @apply border-l-8 bg-white; }
+  .event-type-therapy { @apply border-l-8 bg-white; }
+  .event-type-vocational { @apply border-l-8 bg-white; }
+  .event-type-testing { @apply border-l-8 bg-white; }
+  .event-type-extra-curricular { @apply border-l-8 bg-white; }
+}

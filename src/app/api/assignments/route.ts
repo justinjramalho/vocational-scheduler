@@ -4,13 +4,21 @@ import * as schema from '@/lib/db/schema';
 import { eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
 
 export async function GET(request: Request) {
+  const timestamp = new Date().toISOString();
   try {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
     const cohortId = searchParams.get('cohortId');
     const date = searchParams.get('date');
 
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - GET request`, {
+      studentId,
+      cohortId,
+      date
+    });
+
     if (!studentId && !cohortId) {
+      console.error(`[ASSIGNMENTS-API] ${timestamp} - Missing required parameters`);
       return NextResponse.json({ error: 'Either studentId or cohortId is required' }, { status: 400 });
     }
 
@@ -44,11 +52,17 @@ export async function GET(request: Request) {
         ));
 
       if (date) {
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
+        // Create UTC date range for the specified date
+        const startOfDay = new Date(date + 'T00:00:00.000Z');
+        const endOfDay = new Date(date + 'T23:59:59.999Z');
 
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Date filter:`, {
+          date,
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString()
+        });
+
+        // Add date filtering to existing query
         query = query.where(and(
           eq(schema.assignments.studentId, studentId),
           eq(schema.assignments.active, true),
@@ -58,6 +72,7 @@ export async function GET(request: Request) {
       }
 
       assignments = await query.orderBy(schema.assignments.startTime);
+      console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for student ${studentId}`);
     } else {
       // Get assignments for a cohort (all students in the cohort)
       const cohortStudents = await db
@@ -100,11 +115,17 @@ export async function GET(request: Request) {
         ));
 
       if (date) {
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
+        // Create UTC date range for the specified date
+        const startOfDay = new Date(date + 'T00:00:00.000Z');
+        const endOfDay = new Date(date + 'T23:59:59.999Z');
 
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Cohort date filter:`, {
+          date,
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString()
+        });
+
+        // Add date filtering to existing query
         query = query.where(and(
           inArray(schema.assignments.studentId, studentIds),
           eq(schema.assignments.active, true),
@@ -114,7 +135,17 @@ export async function GET(request: Request) {
       }
 
       assignments = await query.orderBy(schema.assignments.startTime);
+      console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for cohort ${cohortId}`);
     }
+
+    console.log(`[ASSIGNMENTS-API] ${timestamp} - Returning assignments:`, 
+      assignments.map(a => ({ 
+        eventType: a.eventType, 
+        eventTitle: a.eventTitle, 
+        studentName: a.studentName,
+        startTime: a.startTime 
+      }))
+    );
 
     return NextResponse.json(assignments);
   } catch (error) {

@@ -5,14 +5,17 @@ import { Assignment, Student, StudentCohort, EventType } from '@/types';
 import AccessibleButton from './AccessibleButton';
 import LoadingSpinner from './LoadingSpinner';
 
-// Event type color mapping
-const eventTypeColors: Record<EventType, { bg: string; border: string; text: string }> = {
-  'Academic': { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-800' },
-  'Elective': { bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-800' },
-  'Therapy': { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800' },
-  'Vocational': { bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-800' },
-  'Testing': { bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-800' },
-  'Extra-curricular': { bg: 'bg-pink-100', border: 'border-pink-300', text: 'text-pink-800' },
+// Event type CSS class mapping for new visual themes
+const getEventTypeClass = (eventType: EventType): string => {
+  const classMap: Record<EventType, string> = {
+    'Academic': 'event-type-academic',
+    'Elective': 'event-type-elective', 
+    'Therapy': 'event-type-therapy',
+    'Vocational': 'event-type-vocational',
+    'Testing': 'event-type-testing',
+    'Extra-curricular': 'event-type-extra-curricular',
+  };
+  return classMap[eventType] || 'event-type-academic';
 };
 
 interface ScheduleViewProps {
@@ -220,15 +223,13 @@ export default function ScheduleView({
         ) : (
           <div className="space-y-3">
             {assignments.map((assignment) => {
-              const colors = eventTypeColors[assignment.eventType];
+              const eventTypeClass = getEventTypeClass(assignment.eventType);
               const isCurrent = isCurrentEvent(assignment);
               
               return (
                 <div
                   key={assignment.id}
-                  className={`relative flex items-center p-4 rounded-lg border-l-4 bg-white shadow-sm hover:shadow-md transition-shadow ${
-                    colors.bg
-                  } ${colors.border} ${
+                  className={`event-card ${eventTypeClass} shadow-sm hover:shadow-md ${
                     isCurrent ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
                   }`}
                 >
@@ -244,21 +245,23 @@ export default function ScheduleView({
 
                   {/* Event Details */}
                   <div className="flex-1 ml-4 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-bold truncate">
                         {assignment.eventTitle}
                       </h3>
-                      {isCurrent && (
-                        <span className="flex-shrink-0 ml-2 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded-full">
-                          Now
+                      <div className="flex items-center space-x-2">
+                        <span className="event-badge">
+                          {assignment.eventType}
                         </span>
-                      )}
+                        {isCurrent && (
+                          <span className="px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded-full">
+                            Now
+                          </span>
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="mt-1 space-y-1">
-                      <p className={`text-xs font-medium ${colors.text}`}>
-                        {assignment.eventType}
-                      </p>
+                    <div className="space-y-1 text-xs opacity-90">
                       
                       <div className="flex items-center text-xs text-gray-600">
                         <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

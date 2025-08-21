@@ -9,12 +9,14 @@ interface Props {
 
 // GET /api/students/[id] - Get a specific student
 export async function GET(request: NextRequest, { params }: Props) {
+  const timestamp = new Date().toISOString();
   try {
     // Initialize database if needed
     await initializeDatabase();
     
     // Check if DEFAULT_ORG_ID is available
     if (!DEFAULT_ORG_ID) {
+      console.error(`[STUDENTS-API] ${timestamp} - Database not initialized`);
       return NextResponse.json(
         { error: 'Database not initialized. Please call /api/init first.' },
         { status: 503 }
@@ -22,6 +24,7 @@ export async function GET(request: NextRequest, { params }: Props) {
     }
 
     const { id } = await params;
+    console.log(`[STUDENTS-API] ${timestamp} - GET request for student: ${id}`);
     
     const student = await db
       .select({
@@ -71,6 +74,16 @@ export async function GET(request: NextRequest, { params }: Props) {
         programName: student[0].cohortProgramName
       } : null
     };
+
+    console.log(`[STUDENTS-API] ${timestamp} - Student response:`, {
+      name: response.fullName,
+      program: response.program,
+      cohort: response.cohort ? {
+        name: response.cohort.name,
+        programId: response.cohort.programId,
+        programName: response.cohort.programName
+      } : null
+    });
 
     return NextResponse.json(response);
   } catch (error) {

@@ -54,8 +54,15 @@ export default function AssignmentForm({
   // Fetch available classes when student and event type change
   useEffect(() => {
     const fetchClasses = async () => {
+      const timestamp = new Date().toISOString();
+      console.log(`[ASSIGNMENT-FORM] ${timestamp} - Starting class fetch`, {
+        studentId: formData.studentId,
+        eventType: formData.eventType
+      });
+
       if (!formData.studentId || !formData.eventType || 
           (formData.eventType !== 'Academic' && formData.eventType !== 'Elective')) {
+        console.log(`[ASSIGNMENT-FORM] ${timestamp} - Skipping class fetch (invalid conditions)`);
         setAvailableClasses([]);
         setSelectedClass(null);
         setShowNewClassTitle(false);
@@ -66,31 +73,61 @@ export default function AssignmentForm({
       try {
         const selectedStudent = students.find(s => s.id === formData.studentId);
         if (!selectedStudent) {
+          console.log(`[ASSIGNMENT-FORM] ${timestamp} - Student not found in local list`);
           setAvailableClasses([]);
           return;
         }
 
+        console.log(`[ASSIGNMENT-FORM] ${timestamp} - Selected student:`, selectedStudent.fullName);
+
         // Get the student's program information to fetch relevant classes
-        const response = await fetch(`/api/students/${formData.studentId}`);
+        const studentUrl = `/api/students/${formData.studentId}`;
+        console.log(`[ASSIGNMENT-FORM] ${timestamp} - Fetching student details from:`, studentUrl);
+        
+        const response = await fetch(studentUrl);
         if (response.ok) {
           const studentDetails = await response.json();
+          console.log(`[ASSIGNMENT-FORM] ${timestamp} - Student details:`, {
+            name: studentDetails.fullName,
+            program: studentDetails.program,
+            cohort: studentDetails.cohort
+          });
+          
           const programId = studentDetails.cohort?.programId || null;
           
           if (programId) {
             // Fetch classes for this program
-            const classesResponse = await fetch(`/api/classes?programId=${programId}`);
+            const classesUrl = `/api/classes?programId=${programId}`;
+            console.log(`[ASSIGNMENT-FORM] ${timestamp} - Fetching classes from:`, classesUrl);
+            
+            const classesResponse = await fetch(classesUrl);
             if (classesResponse.ok) {
               const classes: Class[] = await classesResponse.json();
+              console.log(`[ASSIGNMENT-FORM] ${timestamp} - Fetched ${classes.length} classes:`, 
+                classes.map(c => ({ name: c.name, eventType: c.eventType, active: c.active }))
+              );
+              
               // Filter classes by event type
               const filteredClasses = classes.filter(c => 
                 c.eventType === formData.eventType && c.active
               );
+              
+              console.log(`[ASSIGNMENT-FORM] ${timestamp} - Filtered to ${filteredClasses.length} ${formData.eventType} classes:`,
+                filteredClasses.map(c => c.name)
+              );
+              
               setAvailableClasses(filteredClasses);
+            } else {
+              console.error(`[ASSIGNMENT-FORM] ${timestamp} - Classes API error:`, classesResponse.status);
             }
+          } else {
+            console.log(`[ASSIGNMENT-FORM] ${timestamp} - No program ID found for student`);
           }
+        } else {
+          console.error(`[ASSIGNMENT-FORM] ${timestamp} - Student API error:`, response.status);
         }
       } catch (error) {
-        console.error('Error fetching classes:', error);
+        console.error(`[ASSIGNMENT-FORM] ${timestamp} - Error fetching classes:`, error);
         setAvailableClasses([]);
       } finally {
         setLoadingClasses(false);

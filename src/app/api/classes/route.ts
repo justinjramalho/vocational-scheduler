@@ -5,12 +5,14 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 
 // GET /api/classes?programId=xxx - Get classes, optionally filtered by program
 export async function GET(request: NextRequest) {
+  const timestamp = new Date().toISOString();
   try {
     // Initialize database if needed
     await initializeDatabase();
     
     // Check if DEFAULT_ORG_ID is available
     if (!DEFAULT_ORG_ID) {
+      console.error(`[CLASSES-API] ${timestamp} - Database not initialized`);
       return NextResponse.json(
         { error: 'Database not initialized. Please call /api/init first.' },
         { status: 503 }
@@ -19,6 +21,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const programId = searchParams.get('programId');
+    
+    console.log(`[CLASSES-API] ${timestamp} - GET request`, {
+      programId,
+      orgId: DEFAULT_ORG_ID
+    });
 
     // Build where conditions
     const whereConditions = [
@@ -28,6 +35,9 @@ export async function GET(request: NextRequest) {
 
     if (programId) {
       whereConditions.push(eq(classes.programId, programId));
+      console.log(`[CLASSES-API] ${timestamp} - Filtering by programId: ${programId}`);
+    } else {
+      console.log(`[CLASSES-API] ${timestamp} - No programId filter, returning all classes`);
     }
 
     const classesWithCounts = await db
@@ -66,6 +76,15 @@ export async function GET(request: NextRequest) {
       .where(and(...whereConditions))
       .groupBy(classes.id, programs.name)
       .orderBy(desc(classes.createdAt));
+
+    console.log(`[CLASSES-API] ${timestamp} - Found ${classesWithCounts.length} classes:`, 
+      classesWithCounts.map(c => ({ 
+        name: c.name, 
+        eventType: c.eventType, 
+        programName: c.programName,
+        active: c.active 
+      }))
+    );
 
     return NextResponse.json(classesWithCounts);
   } catch (error) {
