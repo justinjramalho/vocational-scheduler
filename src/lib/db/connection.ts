@@ -205,63 +205,75 @@ export async function initializeDatabase() {
       {
         firstName: 'Emma',
         lastName: 'Johnson',
+        studentId: 'ST001',
+        email: 'emma.johnson@demoschool.edu',
         grade: 'Transition Year 2',
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[0].id,
         organizationId: demoOrg.id,
         emergencyContact: 'Mary Johnson (Mother) - 555-0101',
-        isActive: true
+        active: true
       },
       {
         firstName: 'Michael',
         lastName: 'Brown',
+        studentId: 'ST002',
+        email: 'michael.brown@demoschool.edu',
         grade: 'Post-Secondary Year 1',
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[0].id,
         organizationId: demoOrg.id,
         emergencyContact: 'David Brown (Father) - 555-0102',
-        isActive: true
+        active: true
       },
       {
         firstName: 'Sophia',
         lastName: 'Davis',
+        studentId: 'ST003',
+        email: 'sophia.davis@demoschool.edu',
         grade: 'Transition Year 3',
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[0].id,
         organizationId: demoOrg.id,
         emergencyContact: 'Lisa Davis (Mother) - 555-0103',
-        isActive: true
+        active: true
       },
       // Cohort B students
       {
         firstName: 'John',
         lastName: 'Smith',
+        studentId: 'ST004',
+        email: 'john.smith@demoschool.edu',
         grade: 'Transition Year 1',
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[1].id,
         organizationId: demoOrg.id,
         emergencyContact: 'Jennifer Smith (Guardian) - 555-0104',
-        isActive: true
+        active: true
       },
       {
         firstName: 'Olivia',
         lastName: 'Wilson',
+        studentId: 'ST005',
+        email: 'olivia.wilson@demoschool.edu',
         grade: 'Post-Secondary Year 2',
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[1].id,
         organizationId: demoOrg.id,
         emergencyContact: 'Robert Wilson (Father) - 555-0105',
-        isActive: true
+        active: true
       },
       {
         firstName: 'Lucas',
         lastName: 'Martinez',
+        studentId: 'ST006',
+        email: 'lucas.martinez@demoschool.edu',
         grade: 'Transition Year 4',
         program: 'SPED Vocation Program',
         cohortId: demoCohorts[1].id,
         organizationId: demoOrg.id,
         emergencyContact: 'Carmen Martinez (Mother) - 555-0106',
-        isActive: true
+        active: true
       }
     ]).returning();
 

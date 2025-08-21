@@ -17,6 +17,7 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
   const [error, setError] = useState<string | null>(null);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>(students);
   const [selectedCohort, setSelectedCohort] = useState<string>('all');
+  const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
   // Modal states
@@ -29,12 +30,16 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
     loadData();
   }, []);
 
-  // Filter students based on cohort and search term
+  // Filter students based on cohort, grade, and search term
   useEffect(() => {
     let filtered = students.filter(student => student.active);
     
     if (selectedCohort !== 'all') {
       filtered = filtered.filter(student => student.cohortId === selectedCohort);
+    }
+    
+    if (selectedGrade !== 'all') {
+      filtered = filtered.filter(student => student.grade === selectedGrade);
     }
     
     if (searchTerm) {
@@ -46,7 +51,7 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
     }
     
     setFilteredStudents(filtered);
-  }, [students, selectedCohort, searchTerm]);
+  }, [students, selectedCohort, selectedGrade, searchTerm]);
 
   const loadData = async () => {
     try {
@@ -67,6 +72,16 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
     }
   };
 
+  // Get unique grades from students data
+  const getUniqueGrades = () => {
+    const grades = students
+      .filter(student => student.active && student.grade)
+      .map(student => student.grade)
+      .filter((grade, index, array) => array.indexOf(grade) === index)
+      .sort();
+    return grades;
+  };
+
   const handleCohortChange = async (studentId: string, newCohortId: string) => {
     try {
       const student = students.find(s => s.id === studentId);
@@ -78,6 +93,7 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
         email: student.email || '',
         studentId: student.studentId || '',
         grade: student.grade || '',
+        program: student.program || '',
         cohortId: newCohortId,
         notes: student.notes || '',
         emergencyContact: student.emergencyContact || '',
@@ -220,6 +236,25 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
           </div>
           
           <div>
+            <label htmlFor="grade-filter" className="block text-sm font-medium text-gray-700 mb-1">
+              Filter by Grade
+            </label>
+            <select
+              id="grade-filter"
+              value={selectedGrade}
+              onChange={(e) => setSelectedGrade(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Grades</option>
+              {getUniqueGrades().map(grade => (
+                <option key={grade} value={grade || ''}>
+                  {grade}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
             <label htmlFor="cohort-filter" className="block text-sm font-medium text-gray-700 mb-1">
               Filter by Cohort
             </label>
@@ -237,11 +272,12 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
               ))}
             </select>
           </div>
+        </div>
 
-          <div className="flex items-end">
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">{filteredStudents.length}</span> of <span className="font-medium">{students.filter(s => s.active).length}</span> students shown
-            </div>
+        {/* Results Counter */}
+        <div className="flex justify-end">
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">{filteredStudents.length}</span> of <span className="font-medium">{students.filter(s => s.active).length}</span> students shown
           </div>
         </div>
       </div>
