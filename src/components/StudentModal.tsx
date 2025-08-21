@@ -100,10 +100,21 @@ export default function StudentModal({
   const validateForm = (): boolean => {
     const newErrors: Partial<StudentFormData> = {};
 
+    // Required fields
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (!formData.studentId.trim()) newErrors.studentId = 'Student ID is required';
+    if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Emergency contact is required';
+    
+    // Required for Google Classroom integration
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email address is required for Google Classroom integration';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
+    }
+    
+    if (!formData.grade.trim()) {
+      newErrors.grade = 'Grade level is required for Google Classroom integration';
     }
 
     setErrors(newErrors);
@@ -230,7 +241,7 @@ export default function StudentModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
+                Email Address *
               </label>
               <input
                 type="email"
@@ -249,35 +260,45 @@ export default function StudentModal({
 
             <div>
               <label htmlFor="studentId" className="block text-sm font-medium text-gray-700 mb-1">
-                Student ID
+                Student ID *
               </label>
               <input
                 type="text"
                 id="studentId"
                 value={formData.studentId}
                 onChange={(e) => handleInputChange('studentId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.studentId ? 'border-red-300' : 'border-gray-300'
+                }`}
                 placeholder="ST001"
               />
+              {errors.studentId && (
+                <p className="mt-1 text-sm text-red-600">{errors.studentId}</p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-1">
-                Grade Level
+                Grade Level *
               </label>
               <select
                 id="grade"
                 value={formData.grade}
                 onChange={(e) => handleInputChange('grade', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.grade ? 'border-red-300' : 'border-gray-300'
+                }`}
               >
                 <option value="">Select grade</option>
                 {gradeOptions.map(grade => (
                   <option key={grade} value={grade}>{grade}</option>
                 ))}
               </select>
+              {errors.grade && (
+                <p className="mt-1 text-sm text-red-600">{errors.grade}</p>
+              )}
             </div>
 
             <div>
@@ -312,16 +333,21 @@ export default function StudentModal({
           {/* Emergency Contact */}
           <div>
             <label htmlFor="emergencyContact" className="block text-sm font-medium text-gray-700 mb-1">
-              Emergency Contact
+              Emergency Contact *
             </label>
             <input
               type="text"
               id="emergencyContact"
               value={formData.emergencyContact}
               onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.emergencyContact ? 'border-red-300' : 'border-gray-300'
+              }`}
               placeholder="Jane Smith (Mother) - 908-555-0123"
             />
+            {errors.emergencyContact && (
+              <p className="mt-1 text-sm text-red-600">{errors.emergencyContact}</p>
+            )}
           </div>
 
           {/* Accommodations */}
