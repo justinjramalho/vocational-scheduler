@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/connection';
 import * as schema from '@/lib/db/schema';
-import { eq, and, gte, lte, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
         .from(schema.assignments)
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
         .where(and(
-          sql`${schema.assignments.studentId} = ANY(${studentIds})`,
+          inArray(schema.assignments.studentId, studentIds),
           eq(schema.assignments.active, true)
         ));
 
@@ -106,7 +106,7 @@ export async function GET(request: Request) {
         endOfDay.setHours(23, 59, 59, 999);
 
         query = query.where(and(
-          sql`${schema.assignments.studentId} = ANY(${studentIds})`,
+          inArray(schema.assignments.studentId, studentIds),
           eq(schema.assignments.active, true),
           gte(schema.assignments.startTime, startOfDay),
           lte(schema.assignments.startTime, endOfDay)

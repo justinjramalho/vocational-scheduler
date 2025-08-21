@@ -158,39 +158,7 @@ export default function ScheduleView({
     : `Schedule: ${cohort?.name || 'Cohort'}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header with Navigation */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-gray-900">
-              <button 
-                onClick={onNavigateToMenu}
-                className="hover:text-blue-600 transition-colors"
-              >
-                Vocational Scheduler
-              </button>
-            </h1>
-            <nav className="flex space-x-4">
-              <button 
-                onClick={onNavigateToMenu}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Dashboard
-              </button>
-              <button 
-                onClick={() => window.location.href = '/students'}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Students
-              </button>
-              <button className="text-blue-600 border-b-2 border-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                Schedules
-              </button>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="bg-gray-50 flex flex-col">
 
       {/* Centered Title */}
       <div className="bg-white border-b">
