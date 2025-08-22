@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Assignment, Student, StudentCohort, EventType } from '@/types';
-import AccessibleButton from './AccessibleButton';
-import LoadingSpinner from './LoadingSpinner';
 
 // Event type CSS class mapping for new visual themes
 const getEventTypeClass = (eventType: EventType): string => {
@@ -42,7 +40,6 @@ export default function ScheduleView({
   targetId,
   student,
   cohort,
-  onNavigateToMenu,
   onAddAssignment
 }: ScheduleViewProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());

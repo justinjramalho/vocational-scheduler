@@ -121,7 +121,7 @@ export default function Home() {
                   </span>
                 </div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-2">Individual Scheduling</h4>
-                <p className="text-gray-600 text-sm">Customized schedules for each student's unique needs</p>
+                <p className="text-gray-600 text-sm">Customized schedules for each student&apos;s unique needs</p>
               </div>
               
               {/* LMS Integration */}

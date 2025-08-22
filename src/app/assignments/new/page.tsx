@@ -39,7 +39,8 @@ function NewAssignmentPageInner() {
       setInitialFormData({ studentId });
     } else if (cohortId) {
       // For cohort assignments, we'll let user select from cohort students
-      setInitialFormData({ cohortId });
+      // Note: cohortId is used for form context but not part of AssignmentFormData
+      setInitialFormData({});
     }
   }, [searchParams]);
 

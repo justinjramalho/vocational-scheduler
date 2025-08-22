@@ -15,8 +15,7 @@ export default function AssignmentForm({
   onSubmit, 
   onCancel, 
   initialData, 
-  students,
-  loading = false
+  students
 }: AssignmentFormProps) {
   const [formData, setFormData] = useState<AssignmentFormData>({
     studentId: '',
@@ -399,7 +398,7 @@ export default function AssignmentForm({
             <div className="mt-2 mb-2">
               <div className="text-sm text-gray-700">
                 <span className="font-bold">Class Title:</span>
-                <span className="ml-1">"{formData.eventTitle}"</span>
+                <span className="ml-1">&quot;{formData.eventTitle}&quot;</span>
               </div>
             </div>
           )}

@@ -160,7 +160,7 @@ export async function POST(request: Request) {
   const timestamp = new Date().toISOString();
   console.log(`[ASSIGNMENTS-API] ${timestamp} - POST request started`);
   
-  let body: any;
+  let body: Record<string, unknown> = {};
   
   try {
     body = await request.json();
@@ -180,7 +180,21 @@ export async function POST(request: Request) {
       notes,
       responsibleParty,
       pointOfContact
-    } = body;
+    } = body as {
+      studentId: string;
+      classId?: string;
+      eventType: string;
+      eventTitle: string;
+      location: string;
+      startTime: string;
+      endTime?: string;
+      duration?: number;
+      recurrence?: string;
+      recurrenceEndDate?: string;
+      notes?: string;
+      responsibleParty: string;
+      pointOfContact?: string;
+    };
 
     // Flexible time calculation - support multiple input scenarios
     let finalStartTime: Date;
@@ -263,7 +277,7 @@ export async function POST(request: Request) {
     // if ((eventType === 'Academic' || eventType === 'Elective') && !classId) {
     //   ... class creation logic ...
     // }
-    let finalClassId = null; // TEMPORARILY SET TO NULL
+    const finalClassId = null; // TEMPORARILY SET TO NULL
 
     console.log(`[ASSIGNMENTS-API] ${timestamp} - Creating assignment with values:`, {
       studentId,
@@ -301,23 +315,25 @@ export async function POST(request: Request) {
     // }
 
     return NextResponse.json(newAssignment, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ASSIGNMENTS-API] ERROR CAUGHT:', error);
-    console.error('[ASSIGNMENTS-API] Error message:', error?.message);
-    console.error('[ASSIGNMENTS-API] Error stack:', error?.stack);
-    console.error('[ASSIGNMENTS-API] Error name:', error?.name);
-    console.error('[ASSIGNMENTS-API] Error code:', error?.code);
-    console.error('[ASSIGNMENTS-API] Error detail:', error?.detail);
-    console.error('[ASSIGNMENTS-API] Error constraint:', error?.constraint);
+    
+    const errorObj = error as Record<string, unknown>;
+    console.error('[ASSIGNMENTS-API] Error message:', errorObj?.message);
+    console.error('[ASSIGNMENTS-API] Error stack:', errorObj?.stack);
+    console.error('[ASSIGNMENTS-API] Error name:', errorObj?.name);
+    console.error('[ASSIGNMENTS-API] Error code:', errorObj?.code);
+    console.error('[ASSIGNMENTS-API] Error detail:', errorObj?.detail);
+    console.error('[ASSIGNMENTS-API] Error constraint:', errorObj?.constraint);
     console.error('[ASSIGNMENTS-API] Request body was:', JSON.stringify(body || {}, null, 2));
     
     return NextResponse.json({ 
       error: 'Failed to create assignment',
-      details: error?.message || 'Unknown error',
-      errorName: error?.name || 'Unknown',
-      code: error?.code,
-      detail: error?.detail,
-      constraint: error?.constraint,
+      details: (errorObj?.message as string) || 'Unknown error',
+      errorName: (errorObj?.name as string) || 'Unknown',
+      code: errorObj?.code,
+      detail: errorObj?.detail,
+      constraint: errorObj?.constraint,
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }

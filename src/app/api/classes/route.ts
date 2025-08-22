@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, DEFAULT_ORG_ID, DEFAULT_USER_ID, initializeDatabase } from '@/lib/db/connection';
-import { classes, cohorts, students, programs } from '@/lib/db/schema';
+import { classes, programs } from '@/lib/db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
 // GET /api/classes?programId=xxx - Get classes, optionally filtered by program

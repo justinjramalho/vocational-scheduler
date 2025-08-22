@@ -99,89 +99,99 @@ export async function initializeDatabase() {
         }).returning();
 
     // Create 10 classes (Academic, Elective, Vocational)
-    const demoClasses = await db.insert(schema.classes).values([
+    await db.insert(schema.classes).values([
       // Academic Classes
       {
         name: 'Math Fundamentals',
-        type: 'Academic',
+        eventType: 'Academic',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[1].id, // Ian Instructor
-        room: 'Room 101',
-        schedule: 'MWF 9:00-10:00'
+        programId: program.id,
+        createdBy: demoUsers[1].id, // Ian Instructor
+        location: 'Room 101',
+        defaultDuration: 60 // 60 minutes
       },
       {
         name: 'English Language Arts',
-        type: 'Academic',
+        eventType: 'Academic',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[1].id,
-        room: 'Room 102',
-        schedule: 'TTh 10:00-11:30'
+        programId: program.id,
+        createdBy: demoUsers[1].id,
+        location: 'Room 102',
+        defaultDuration: 90
       },
       {
         name: 'Life Science',
-        type: 'Academic',
+        eventType: 'Academic',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[2].id, // Sam Specialist
-        room: 'Lab 201',
-        schedule: 'MW 1:00-2:30'
+        programId: program.id,
+        createdBy: demoUsers[2].id, // Sam Specialist
+        location: 'Lab 201',
+        defaultDuration: 90
       },
       {
         name: 'Social Studies',
-        type: 'Academic',
+        eventType: 'Academic',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[1].id,
-        room: 'Room 103',
-        schedule: 'TTh 2:00-3:00'
+        programId: program.id,
+        createdBy: demoUsers[1].id,
+        location: 'Room 103',
+        defaultDuration: 60
       },
       // Elective Classes
       {
         name: 'Art Therapy',
-        type: 'Elective',
+        eventType: 'Elective',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[2].id,
-        room: 'Art Studio',
-        schedule: 'F 10:00-12:00'
+        programId: program.id,
+        createdBy: demoUsers[2].id,
+        location: 'Art Studio',
+        defaultDuration: 120
       },
       {
         name: 'Music Appreciation',
-        type: 'Elective',
+        eventType: 'Elective',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[4].id, // Sophie Staff
-        room: 'Music Room',
-        schedule: 'Th 1:00-2:00'
+        programId: program.id,
+        createdBy: demoUsers[4].id, // Sophie Staff
+        location: 'Music Room',
+        defaultDuration: 60
       },
       {
         name: 'Physical Education',
-        type: 'Elective',
+        eventType: 'Elective',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[3].id, // Paul Paraprofessional
-        room: 'Gymnasium',
-        schedule: 'MW 11:00-12:00'
+        programId: program.id,
+        createdBy: demoUsers[3].id, // Paul Paraprofessional
+        location: 'Gymnasium',
+        defaultDuration: 60
       },
       // Vocational Classes
       {
         name: 'Automotive Basics',
-        type: 'Vocational',
+        eventType: 'Vocational',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[1].id,
-        room: 'Auto Shop',
-        schedule: 'TTh 9:00-11:00'
+        programId: program.id,
+        createdBy: demoUsers[1].id,
+        location: 'Auto Shop',
+        defaultDuration: 120
       },
       {
         name: 'Culinary Arts',
-        type: 'Vocational',
+        eventType: 'Vocational',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[2].id,
-          room: 'Kitchen Lab',
-        schedule: 'MWF 2:00-4:00'
+        programId: program.id,
+        createdBy: demoUsers[2].id,
+        location: 'Kitchen Lab',
+        defaultDuration: 120
       },
       {
         name: 'Computer Skills',
-        type: 'Vocational',
+        eventType: 'Vocational',
         organizationId: demoOrg.id,
-        teacherId: demoUsers[4].id,
-        room: 'Computer Lab',
-        schedule: 'F 9:00-11:00'
+        programId: program.id,
+        createdBy: demoUsers[4].id,
+        location: 'Computer Lab',
+        defaultDuration: 120
       }
     ]).returning();
 

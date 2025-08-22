@@ -69,12 +69,13 @@ export async function GET() {
     }));
 
     return NextResponse.json(transformedStudents);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching students:', error);
-    console.error('Error details:', error.message);
-    console.error('Error stack:', error.stack);
+    const errorObj = error as Record<string, unknown>;
+    console.error('Error details:', errorObj?.message);
+    console.error('Error stack:', errorObj?.stack);
     return NextResponse.json(
-      { error: 'Failed to fetch students', details: error.message },
+      { error: 'Failed to fetch students', details: (errorObj?.message as string) || 'Unknown error' },
       { status: 500 }
     );
   }
