@@ -53,6 +53,7 @@ export async function GET(request: Request) {
         .select({
           id: schema.assignments.id,
           studentId: schema.assignments.studentId,
+          classId: schema.assignments.classId, // FIXED: Added missing classId field
           studentName: sql<string>`${schema.students.firstName} || ' ' || ${schema.students.lastName}`,
           eventType: schema.assignments.eventType,
           eventTitle: schema.assignments.eventTitle,
@@ -116,6 +117,7 @@ export async function GET(request: Request) {
         .select({
           id: schema.assignments.id,
           studentId: schema.assignments.studentId,
+          classId: schema.assignments.classId, // FIXED: Added missing classId field
           studentName: sql<string>`${schema.students.firstName} || ' ' || ${schema.students.lastName}`,
           eventType: schema.assignments.eventType,
           eventTitle: schema.assignments.eventTitle,
@@ -196,6 +198,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ 
           error: 'Calculated duration must be between 1 and 720 minutes',
           calculatedDuration: finalDuration 
+        }, { status: 400 });
+      }
+
+      // If duration was also provided, validate consistency
+      if (duration && Math.abs(finalDuration - duration) > 0) {
+        return NextResponse.json({
+          error: 'Time mismatch: startTime + duration ≠ endTime',
+          details: `Calculated duration (${finalDuration} min) doesn't match provided duration (${duration} min)`,
+          calculatedDuration: finalDuration,
+          providedDuration: duration
         }, { status: 400 });
       }
     } else if (startTime && duration) {
