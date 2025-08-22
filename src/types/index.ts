@@ -92,6 +92,11 @@ export interface AssignmentFormData {
   notes: string;
   responsibleParty: string;
   pointOfContact: string;
+  // Batch import metadata (preparation for future bulk operations)
+  importBatchId?: string;
+  importTimestamp?: string;
+  importSource?: 'csv' | 'google_sheets' | 'google_classroom' | 'manual';
+  importUserId?: string;
 }
 
 // Class/Group definitions for organizing students
@@ -136,6 +141,52 @@ export interface GoogleClassroomIntegration {
   classId: string;
   className: string;
   students: StudentImportData[];
+}
+
+// Bulk import types (preparation for future development)
+export interface ImportValidationError {
+  line: number;
+  field: string;
+  value: string;
+  error: string;
+}
+
+export interface BulkImportResult {
+  success: boolean;
+  totalRows: number;
+  validRows: number;
+  skippedDuplicates: number;
+  errors: ImportValidationError[];
+  batchId?: string;
+}
+
+export interface CSVTemplate {
+  studentId: string; // UUID
+  eventType: EventType;
+  eventTitle: string;
+  startTime: string; // ISO 8601 UTC
+  duration: number; // 1-720 minutes
+  endTime: string; // ISO 8601 UTC
+  classId?: string; // Optional UUID for Academic/Elective
+  location: string;
+  responsibleParty: string;
+  pointOfContact?: string;
+  notes?: string;
+}
+
+export interface OAuthToken {
+  id: string;
+  userId: string;
+  organizationId: string;
+  provider: 'google_classroom' | 'google_sheets';
+  accessToken: string;
+  refreshToken?: string;
+  tokenType: string;
+  expiresAt?: Date;
+  scope?: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Schedule view options

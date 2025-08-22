@@ -147,6 +147,11 @@ export const assignments = pgTable('assignments', {
   responsibleParty: varchar('responsible_party', { length: 255 }).notNull(),
   pointOfContact: varchar('point_of_contact', { length: 255 }),
   organizationId: uuid('organization_id').references(() => organizations.id).notNull(), // RESTORED FOREIGN KEY
+  // Batch import/export metadata (preparation for future bulk operations)
+  importBatchId: uuid('import_batch_id'), // Groups assignments from same import operation
+  importTimestamp: timestamp('import_timestamp', { withTimezone: true }), // When imported
+  importSource: varchar('import_source', { length: 50 }), // 'csv', 'google_sheets', 'google_classroom', 'manual'
+  importUserId: uuid('import_user_id').references(() => users.id), // Who performed the import
   active: boolean('active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -155,6 +160,29 @@ export const assignments = pgTable('assignments', {
   classIdx: index('assignment_class_idx').on(table.classId),
   orgIdx: index('assignment_org_idx').on(table.organizationId),
   startTimeIdx: index('assignment_start_time_idx').on(table.startTime),
+  // Bulk operations indexes (preparation for future import/export)
+  duplicateCheckIdx: index('assignment_duplicate_check_idx').on(table.studentId, table.startTime, table.eventType), // For skip-duplicate logic
+  batchIdx: index('assignment_batch_idx').on(table.importBatchId), // Group by import batch
+  importSourceIdx: index('assignment_import_source_idx').on(table.importSource), // Filter by import source
+}));
+
+// OAuth integration tokens (preparation for Google Classroom sync)
+export const oauthTokens = pgTable('oauth_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
+  provider: varchar('provider', { length: 50 }).notNull(), // 'google_classroom', 'google_sheets', etc.
+  accessToken: text('access_token').notNull(),
+  refreshToken: text('refresh_token'),
+  tokenType: varchar('token_type', { length: 20 }).default('Bearer').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  scope: text('scope'), // OAuth scopes granted
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  userProviderIdx: index('oauth_user_provider_idx').on(table.userId, table.provider), // One token per user per provider
+  orgIdx: index('oauth_org_idx').on(table.organizationId),
 }));
 
 // Session management for NextAuth.js
@@ -221,6 +249,9 @@ export type NewStudent = typeof students.$inferInsert;
 
 export type Assignment = typeof assignments.$inferSelect;
 export type NewAssignment = typeof assignments.$inferInsert;
+
+export type OAuthToken = typeof oauthTokens.$inferSelect;
+export type NewOAuthToken = typeof oauthTokens.$inferInsert;
 
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
