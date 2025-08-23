@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Assignment, Student, StudentCohort, EventType } from '@/types';
+import { Assignment, Student, StudentCohort, Program, EventType } from '@/types';
 
 // Event type CSS class mapping for new visual themes
 const getEventTypeClass = (eventType: EventType): string => {
@@ -17,10 +17,11 @@ const getEventTypeClass = (eventType: EventType): string => {
 };
 
 interface ScheduleViewProps {
-  viewType: 'student' | 'cohort';
-  targetId: string; // student ID or cohort ID
+  viewType: 'student' | 'cohort' | 'program';
+  targetId: string; // student ID, cohort ID, or program ID
   student?: Student;
   cohort?: StudentCohort;
+  program?: Program;
   onNavigateToMenu: () => void;
   onAddAssignment: () => void;
 }
@@ -40,6 +41,7 @@ export default function ScheduleView({
   targetId,
   student,
   cohort,
+  program,
   onAddAssignment
 }: ScheduleViewProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -65,8 +67,10 @@ export default function ScheduleView({
         
         if (viewType === 'student') {
           url += `studentId=${targetId}&date=${dateStr}`;
-        } else {
+        } else if (viewType === 'cohort') {
           url += `cohortId=${targetId}&date=${dateStr}`;
+        } else if (viewType === 'program') {
+          url += `programId=${targetId}&date=${dateStr}`;
         }
         
         const response = await fetch(url);
@@ -155,7 +159,9 @@ export default function ScheduleView({
 
   const scheduleTitle = viewType === 'student' 
     ? `Schedule: ${student?.fullName || 'Student'}`
-    : `Schedule: ${cohort?.name || 'Cohort'}`;
+    : viewType === 'cohort'
+    ? `Schedule: ${cohort?.name || 'Cohort'}`
+    : `Schedule: ${program?.name || 'Program'}`;
 
   return (
     <div className="bg-gray-50 flex flex-col">
@@ -268,7 +274,7 @@ export default function ScheduleView({
                         {assignment.location}
                       </div>
                       
-                      {viewType === 'cohort' && (
+                      {(viewType === 'cohort' || viewType === 'program') && (
                         <div className="flex items-center text-xs text-gray-600">
                           <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

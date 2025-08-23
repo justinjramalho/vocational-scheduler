@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Student, StudentCohort } from '@/types';
+import { Student, StudentCohort, Program } from '@/types';
 import AppLayout from '@/components/AppLayout';
 import AccessibleButton from '@/components/AccessibleButton';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -11,21 +11,25 @@ export default function SchedulesPage() {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [cohorts, setCohorts] = useState<StudentCohort[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [studentsResponse, cohortsResponse] = await Promise.all([
+        const [studentsResponse, cohortsResponse, programsResponse] = await Promise.all([
           fetch('/api/students'),
-          fetch('/api/cohorts')
+          fetch('/api/cohorts'),
+          fetch('/api/programs')
         ]);
         
-        if (studentsResponse.ok && cohortsResponse.ok) {
+        if (studentsResponse.ok && cohortsResponse.ok && programsResponse.ok) {
           const studentsData = await studentsResponse.json();
           const cohortsData = await cohortsResponse.json();
+          const programsData = await programsResponse.json();
           setStudents(studentsData);
           setCohorts(cohortsData);
+          setPrograms(programsData);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -63,6 +67,42 @@ export default function SchedulesPage() {
                 🎓 Import from Google Classroom
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Program Schedules */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Program Schedules</h3>
+            <p className="text-gray-600">View schedules for entire programs across all students</p>
+          </div>
+          <div className="p-6">
+            {loading ? (
+              <LoadingSpinner aria-label="Loading programs" />
+            ) : programs.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {programs.map((program) => (
+                  <div key={program.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div>
+                      <h4 className="font-medium text-gray-900">{program.name}</h4>
+                      <p className="text-sm text-gray-600">{program.description || `${program.cohortCount || 0} cohorts`}</p>
+                    </div>
+                    <AccessibleButton
+                      onClick={() => router.push(`/schedules/program/${program.id}`)}
+                      variant="primary"
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm"
+                    >
+                      View Schedule
+                    </AccessibleButton>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-gray-400 text-2xl mb-2">🏫</div>
+                <p className="text-gray-600">No programs available</p>
+              </div>
+            )}
           </div>
         </div>
 

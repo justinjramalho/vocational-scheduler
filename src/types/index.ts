@@ -99,6 +99,19 @@ export interface AssignmentFormData {
   importUserId?: string;
 }
 
+// Program interface for grouping cohorts and students
+export interface Program {
+  id: string;
+  name: string;
+  description?: string | null;
+  organizationId: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  cohortCount?: number; // computed field
+  cohortIds?: string[]; // computed field
+}
+
 // Class/Group definitions for organizing students
 export interface StudentCohort {
   id: string;

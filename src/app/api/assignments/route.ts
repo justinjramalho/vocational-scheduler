@@ -9,17 +9,19 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
     const cohortId = searchParams.get('cohortId');
+    const programId = searchParams.get('programId');
     const date = searchParams.get('date');
 
     console.log(`[ASSIGNMENTS-API] ${timestamp} - GET request`, {
       studentId,
       cohortId,
+      programId,
       date
     });
 
-    if (!studentId && !cohortId) {
+    if (!studentId && !cohortId && !programId) {
       console.error(`[ASSIGNMENTS-API] ${timestamp} - Missing required parameters`);
-      return NextResponse.json({ error: 'Either studentId or cohortId is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Either studentId, cohortId, or programId is required' }, { status: 400 });
     }
 
     let assignments;
@@ -74,7 +76,7 @@ export async function GET(request: Request) {
 
       assignments = await query.orderBy(schema.assignments.startTime);
       console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for student ${studentId}`);
-    } else {
+    } else if (cohortId) {
       // Get assignments for a cohort (all students in the cohort)
       const cohortStudents = await db
         .select({ id: schema.students.id })
@@ -138,6 +140,81 @@ export async function GET(request: Request) {
 
       assignments = await query.orderBy(schema.assignments.startTime);
       console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for cohort ${cohortId}`);
+    } else if (programId) {
+      // Get assignments for a program (all students in the program)
+      // First get the program name
+      const [program] = await db
+        .select({ name: schema.programs.name })
+        .from(schema.programs)
+        .where(eq(schema.programs.id, programId))
+        .limit(1);
+
+      if (!program) {
+        return NextResponse.json({ error: 'Program not found' }, { status: 404 });
+      }
+
+      const programStudents = await db
+        .select({ id: schema.students.id })
+        .from(schema.students)
+        .where(and(
+          eq(schema.students.program, program.name),
+          eq(schema.students.active, true)
+        ));
+
+      if (programStudents.length === 0) {
+        return NextResponse.json([]);
+      }
+
+      const studentIds = programStudents.map(s => s.id);
+
+      // Build where conditions for program
+      const whereConditions = [
+        inArray(schema.assignments.studentId, studentIds),
+        eq(schema.assignments.active, true)
+      ];
+
+      if (date) {
+        // Create UTC date range for the specified date
+        const startOfDay = new Date(date + 'T00:00:00.000Z');
+        const endOfDay = new Date(date + 'T23:59:59.999Z');
+
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Program date filter:`, {
+          date,
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString()
+        });
+
+        whereConditions.push(
+          gte(schema.assignments.startTime, startOfDay),
+          lte(schema.assignments.startTime, endOfDay)
+        );
+      }
+
+      const query = db
+        .select({
+          id: schema.assignments.id,
+          studentId: schema.assignments.studentId,
+          classId: schema.assignments.classId,
+          studentName: sql<string>`${schema.students.firstName} || ' ' || ${schema.students.lastName}`,
+          eventType: schema.assignments.eventType,
+          eventTitle: schema.assignments.eventTitle,
+          location: schema.assignments.location,
+          startTime: schema.assignments.startTime,
+          duration: schema.assignments.duration,
+          endTime: schema.assignments.endTime,
+          recurrence: schema.assignments.recurrence,
+          responsibleParty: schema.assignments.responsibleParty,
+          pointOfContact: schema.assignments.pointOfContact,
+          notes: schema.assignments.notes,
+          createdAt: schema.assignments.createdAt,
+          updatedAt: schema.assignments.updatedAt,
+        })
+        .from(schema.assignments)
+        .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
+        .where(and(...whereConditions));
+
+      assignments = await query.orderBy(schema.assignments.startTime);
+      console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for program ${programId}`);
     }
 
     console.log(`[ASSIGNMENTS-API] ${timestamp} - Returning assignments:`, 
