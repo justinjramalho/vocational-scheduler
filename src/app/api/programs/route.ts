@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, DEFAULT_ORG_ID, DEFAULT_USER_ID, initializeDatabase } from '@/lib/db/connection';
-import { programs, cohorts } from '@/lib/db/schema';
+import { programs, cohorts, students } from '@/lib/db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
 // GET /api/programs - Get all programs
@@ -40,7 +40,7 @@ export async function GET() {
       .groupBy(programs.id)
       .orderBy(desc(programs.createdAt));
 
-    // Transform to include cohortIds array for compatibility
+    // Transform to include cohortIds array and student count for compatibility
     const transformedPrograms = await Promise.all(
       programsWithCohortCount.map(async (program) => {
         const programCohorts = await db
@@ -51,9 +51,19 @@ export async function GET() {
             eq(cohorts.active, true)
           ));
 
+        // Get student count for this program
+        const studentCount = await db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(students)
+          .where(and(
+            eq(students.program, program.name),
+            eq(students.active, true)
+          ));
+
         return {
           ...program,
           cohortIds: programCohorts.map(c => c.id),
+          studentCount: studentCount[0]?.count || 0,
         };
       })
     );

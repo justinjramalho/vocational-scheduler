@@ -256,7 +256,7 @@ export default function AssignmentForm({
       <div className="bg-white rounded-lg shadow-lg">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            Create New Assignment
+            Create New Activity
           </h2>
         </div>
 

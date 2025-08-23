@@ -58,7 +58,7 @@ export default function SchedulesPage() {
                 onClick={() => router.push('/assignments/new')}
                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
-                + Add Assignment
+                + Add Activity
               </button>
               <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2">
                 📊 Import from Google Sheets
@@ -85,7 +85,12 @@ export default function SchedulesPage() {
                   <div key={program.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <div>
                       <h4 className="font-medium text-gray-900">{program.name}</h4>
-                      <p className="text-sm text-gray-600">{program.description || `${program.cohortCount || 0} cohorts`}</p>
+                                                  <p className="text-sm text-gray-600">
+                              {[
+                                (program.studentCount && program.studentCount > 0) ? `${program.studentCount} Student${program.studentCount !== 1 ? 's' : ''}` : null,
+                                (program.cohortCount && program.cohortCount > 0) ? `${program.cohortCount} Cohort${program.cohortCount !== 1 ? 's' : ''}` : null
+                              ].filter(Boolean).join(' · ')}
+                            </p>
                     </div>
                     <AccessibleButton
                       onClick={() => router.push(`/schedules/program/${program.id}`)}
@@ -197,7 +202,7 @@ export default function SchedulesPage() {
               aria-describedby="add-assignment-quick-description"
             >
               <div className="text-4xl mb-1" aria-hidden="true">📝</div>
-              <div className="text-sm font-medium">Create Assignment</div>
+              <div className="text-sm font-medium">Create Activity</div>
             </AccessibleButton>
             
             <AccessibleButton

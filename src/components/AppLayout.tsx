@@ -51,8 +51,8 @@ const navigationItems: NavigationItem[] = [
   },
   {
     href: '/assignments/new',
-    label: 'Assignments',
-    description: 'Create and manage assignments',
+    label: 'Activities',
+    description: 'Create and manage activities',
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -99,7 +99,10 @@ export default function AppLayout({ children, className }: AppLayoutProps) {
             <div className="flex justify-between items-center h-16">
               {/* Logo/Brand */}
               <div className="flex items-center">
-                <h1 className="text-2xl font-bold text-blue-600">
+                <h1 
+                  className="text-2xl font-bold text-blue-600 cursor-pointer hover:text-blue-700 transition-colors"
+                  onClick={() => handleNavigation('/')}
+                >
                   Vocational Scheduler
                 </h1>
               </div>

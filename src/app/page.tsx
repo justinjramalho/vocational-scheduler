@@ -87,10 +87,10 @@ export default function Home() {
                   </svg>
                 </div>
                 <h4 className="text-xl font-semibold text-gray-900 mb-3">
-                  Create Assignment
+                  Create Activity
                 </h4>
                 <p className="text-gray-600 leading-relaxed">
-                  Add new assignments for students
+                  Add new activities for students
                 </p>
               </div>
               <AccessibleButton 
@@ -99,7 +99,7 @@ export default function Home() {
                 className="bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 w-full"
                 aria-describedby="add-assignment-description"
               >
-                Create Assignment
+                Create Activity
               </AccessibleButton>
             </article>
           </section>
@@ -161,7 +161,7 @@ export default function Home() {
 
           {/* Screen reader descriptions */}
           <div className="sr-only">
-            <p id="add-assignment-description">Create new assignments for students</p>
+            <p id="add-assignment-description">Create new activities for students</p>
             <p id="view-schedules-description">Browse existing student schedules</p>
             <p id="manage-students-description">Add, edit, or remove students from the system</p>
           </div>

@@ -333,7 +333,7 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
                         onClick={() => onAddAssignment(student.id)}
                         className="ml-2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       >
-                        + Assignment
+                        + Activity
                       </button>
                     </div>
                   </td>

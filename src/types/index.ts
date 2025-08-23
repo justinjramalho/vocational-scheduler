@@ -109,6 +109,7 @@ export interface Program {
   createdAt: Date;
   updatedAt: Date;
   cohortCount?: number; // computed field
+  studentCount?: number; // computed field
   cohortIds?: string[]; // computed field
 }
 

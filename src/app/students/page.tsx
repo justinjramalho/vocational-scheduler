@@ -43,7 +43,7 @@ export default function StudentsPage() {
               aria-describedby="add-assignment-quick-description"
             >
               <div className="text-4xl mb-1" aria-hidden="true">📝</div>
-              <div className="text-sm font-medium">Create Assignment</div>
+              <div className="text-sm font-medium">Create Activity</div>
             </AccessibleButton>
             
             <AccessibleButton
@@ -70,7 +70,7 @@ export default function StudentsPage() {
           
           {/* Screen reader descriptions */}
           <div className="sr-only">
-            <p id="add-assignment-quick-description">Create a new assignment for students</p>
+            <p id="add-assignment-quick-description">Create a new activity for students</p>
             <p id="view-schedules-quick-description">Navigate to the schedules page to view student and cohort schedules</p>
             <p id="export-students-description">Export student data and information - feature coming soon</p>
           </div>
