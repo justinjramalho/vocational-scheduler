@@ -131,8 +131,8 @@ export default function SchedulesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <AccessibleButton
               onClick={() => router.push('/assignments/new')}
-              variant="secondary"
-              className="bg-gray-700 text-white px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors text-center flex-col"
+              variant="primary"
+              className="!bg-purple-600 !text-white px-4 py-3 rounded-lg !hover:bg-purple-700 transition-colors text-center flex-col"
               aria-describedby="add-assignment-quick-description"
             >
               <div className="text-4xl mb-1" aria-hidden="true">📝</div>
@@ -141,8 +141,8 @@ export default function SchedulesPage() {
             
             <AccessibleButton
               onClick={() => router.push('/students')}
-              variant="secondary"
-              className="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors text-center flex-col"
+              variant="primary"
+              className="!bg-blue-600 !text-white px-4 py-3 rounded-lg !hover:bg-blue-700 transition-colors text-center flex-col"
               aria-describedby="manage-students-quick-description"
             >
               <div className="text-4xl mb-1" aria-hidden="true">👥</div>
@@ -151,8 +151,8 @@ export default function SchedulesPage() {
             
             <AccessibleButton
               disabled
-              variant="secondary"
-              className="bg-blue-600 text-white px-4 py-3 rounded-lg transition-colors text-center flex-col cursor-not-allowed disabled:opacity-100 disabled:bg-blue-600"
+              variant="primary"
+              className="!bg-blue-600 !text-white px-4 py-3 rounded-lg transition-colors text-center flex-col cursor-not-allowed !disabled:opacity-100 !disabled:bg-blue-600"
               aria-describedby="export-schedules-description"
             >
               <div className="text-4xl mb-1" aria-hidden="true">📊</div>

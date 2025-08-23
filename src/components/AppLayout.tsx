@@ -307,24 +307,23 @@ export default function AppLayout({ children, className }: AppLayoutProps) {
               
               {/* Copyright and Accessibility Statement */}
               <div className="border-t border-gray-200 pt-6">
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm text-gray-500">
-                  <p>
-                    © 2025 Vocational Scheduler. Built for accessibility.
-                  </p>
-                  
-                  {/* Accessibility Badge */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                      WCAG 2.1 AA
-                    </span>
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
-                      508 Compliant
-                    </span>
-                  </div>
+                {/* Copyright */}
+                <p className="text-sm text-gray-500 text-center">
+                  © 2025 Vocational Scheduler. Built for accessibility.
+                </p>
+                
+                {/* Accessibility Badges - Own Line */}
+                <div className="flex justify-center items-center gap-2 mt-3">
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                    WCAG 2.1 AA
+                  </span>
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                    508 Compliant
+                  </span>
                 </div>
                 
                 {/* Version Info */}
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-gray-400 mt-3 text-center">
                   Version 1.0.0 | Special Education Focus
                 </p>
               </div>
