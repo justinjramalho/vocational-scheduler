@@ -121,6 +121,7 @@ export interface StudentCohort {
   studentIds: string[];
   teacherName?: string | null;
   academicYear?: string | null;
+  programName?: string | null; // denormalized program name for display
   active: boolean;
   createdAt: Date;
   updatedAt: Date;

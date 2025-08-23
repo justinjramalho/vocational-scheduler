@@ -122,7 +122,7 @@ export default function SchedulesPage() {
                     <div key={student.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <div>
                         <h4 className="font-medium text-gray-900">{student.fullName}</h4>
-                        <p className="text-sm text-gray-600">{student.grade} | {student.cohortName || student.program}</p>
+                        <p className="text-sm text-gray-600">{student.grade} <span className="font-bold">·</span> {student.cohortName || student.program}</p>
                       </div>
                       <AccessibleButton
                         onClick={() => router.push(`/schedules/student/${student.id}`)}
@@ -158,7 +158,7 @@ export default function SchedulesPage() {
                     <div key={cohort.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <div>
                         <h4 className="font-medium text-gray-900">{cohort.name}</h4>
-                        <p className="text-sm text-gray-600">{cohort.description}</p>
+                        <p className="text-sm text-gray-600">{cohort.programName}</p>
                       </div>
                       <AccessibleButton
                         onClick={() => router.push(`/schedules/cohort/${cohort.id}`)}
