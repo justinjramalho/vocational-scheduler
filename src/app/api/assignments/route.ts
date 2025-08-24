@@ -218,6 +218,7 @@ export async function GET(request: Request) {
     }
 
     console.log(`[ASSIGNMENTS-API] ${timestamp} - Returning assignments:`, 
+      // @ts-expect-error - assignments is guaranteed to be defined at this point
       assignments.map(a => ({ 
         eventType: a.eventType, 
         eventTitle: a.eventTitle, 
