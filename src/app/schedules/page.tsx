@@ -6,6 +6,8 @@ import { Student, StudentCohort, Program } from '@/types';
 import AppLayout from '@/components/AppLayout';
 import AccessibleButton from '@/components/AccessibleButton';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ProgramSelectionModal from '@/components/ProgramSelectionModal';
+import { useProgramSelection } from '@/hooks/useProgramSelection';
 
 export default function SchedulesPage() {
   const router = useRouter();
@@ -13,6 +15,23 @@ export default function SchedulesPage() {
   const [cohorts, setCohorts] = useState<StudentCohort[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const {
+    currentProgramId,
+    defaultProgramId,
+    currentProgramName,
+    setCurrentProgram,
+    setDefaultProgram,
+    getFilteredStudents,
+    getFilteredCohorts,
+    getFilteredPrograms,
+  } = useProgramSelection(programs);
+
+  // Get filtered data
+  const filteredStudents = getFilteredStudents(students);
+  const filteredCohorts = getFilteredCohorts(cohorts);
+  const filteredPrograms = getFilteredPrograms(programs);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +63,25 @@ export default function SchedulesPage() {
   return (
     <AppLayout>
       <div className="px-4 sm:px-0">
+        {/* Program Title Header */}
+        <div className="text-center mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="hidden sm:block flex-1"></div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 order-1 sm:order-none">
+              {currentProgramName}
+            </h1>
+            <div className="flex-1 flex justify-center sm:justify-end order-2 sm:order-none">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="text-blue-600 hover:text-blue-800 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-3 py-2 sm:px-0 sm:py-0 min-h-[44px] sm:min-h-0"
+                aria-label="Change program selection"
+              >
+                Change Program
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Header with Management Title and Import Buttons */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -79,9 +117,9 @@ export default function SchedulesPage() {
           <div className="p-6">
             {loading ? (
               <LoadingSpinner aria-label="Loading programs" />
-            ) : programs.length > 0 ? (
+            ) : filteredPrograms.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {programs.map((program) => (
+                {filteredPrograms.map((program) => (
                   <div key={program.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <div>
                       <h4 className="font-medium text-gray-900">{program.name}</h4>
@@ -121,9 +159,9 @@ export default function SchedulesPage() {
             <div className="p-6">
               {loading ? (
                 <LoadingSpinner aria-label="Loading students" />
-              ) : students.length > 0 ? (
+              ) : filteredStudents.length > 0 ? (
                 <div className="space-y-3">
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <div key={student.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <div>
                         <h4 className="font-medium text-gray-900">{student.fullName}</h4>
@@ -157,9 +195,9 @@ export default function SchedulesPage() {
             <div className="p-6">
               {loading ? (
                 <LoadingSpinner aria-label="Loading cohorts" />
-              ) : cohorts.length > 0 ? (
+              ) : filteredCohorts.length > 0 ? (
                 <div className="space-y-3">
-                  {cohorts.map((cohort) => (
+                  {filteredCohorts.map((cohort) => (
                     <div key={cohort.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <div>
                         <h4 className="font-medium text-gray-900">{cohort.name}</h4>
@@ -234,6 +272,17 @@ export default function SchedulesPage() {
             <p id="export-schedules-description">Export schedule data - feature coming soon</p>
           </div>
         </section>
+
+        {/* Program Selection Modal */}
+        <ProgramSelectionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          programs={programs}
+          currentProgramId={currentProgramId}
+          defaultProgramId={defaultProgramId}
+          onProgramSelect={setCurrentProgram}
+          onDefaultProgramChange={setDefaultProgram}
+        />
       </div>
     </AppLayout>
   );

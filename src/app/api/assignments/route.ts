@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/connection';
 import * as schema from '@/lib/db/schema';
-import { eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 
 // Helper function to calculate recurring assignment instances
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function calculateRecurringInstances(assignment: any, targetDate: Date): any[] {
   if (assignment.recurrence === 'None') {
     // For non-recurring assignments, just check if the original date matches the target date
@@ -113,7 +114,7 @@ export async function GET(request: Request) {
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
         .where(and(...whereConditions));
 
-      let allAssignments = await query.orderBy(schema.assignments.startTime);
+      const allAssignments = await query.orderBy(schema.assignments.startTime);
       
       // If a date is specified, filter assignments based on recurrence logic
       if (requestedDate) {
@@ -181,7 +182,7 @@ export async function GET(request: Request) {
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
         .where(and(...whereConditions));
 
-      let allAssignments = await query.orderBy(schema.assignments.startTime);
+      const allAssignments = await query.orderBy(schema.assignments.startTime);
       
       // If a date is specified, filter assignments based on recurrence logic
       if (requestedDate) {
@@ -260,7 +261,7 @@ export async function GET(request: Request) {
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
         .where(and(...whereConditions));
 
-      let allAssignments = await query.orderBy(schema.assignments.startTime);
+      const allAssignments = await query.orderBy(schema.assignments.startTime);
       
       // If a date is specified, filter assignments based on recurrence logic
       if (requestedDate) {
