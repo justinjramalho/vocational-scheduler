@@ -8,9 +8,16 @@ import StudentModal from './StudentModal';
 interface StudentManagementProps {
   onAddAssignment: (studentId: string) => void;
   onViewSchedule: (studentId: string) => void;
+  currentProgramId?: string | null;
+  currentProgramName?: string;
 }
 
-export default function StudentManagement({ onAddAssignment, onViewSchedule }: StudentManagementProps) {
+export default function StudentManagement({ 
+  onAddAssignment, 
+  onViewSchedule, 
+  currentProgramId, 
+  currentProgramName 
+}: StudentManagementProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [cohorts, setCohorts] = useState<StudentCohort[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,9 +37,14 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
     loadData();
   }, []);
 
-  // Filter students based on cohort, grade, and search term
+  // Filter students based on program, cohort, grade, and search term
   useEffect(() => {
     let filtered = students.filter(student => student.active);
+    
+    // Filter by program if a specific program is selected
+    if (currentProgramId !== null && currentProgramName && currentProgramName !== 'All Programs') {
+      filtered = filtered.filter(student => student.program === currentProgramName);
+    }
     
     if (selectedCohort !== 'all') {
       filtered = filtered.filter(student => student.cohortId === selectedCohort);
@@ -51,7 +63,7 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
     }
     
     setFilteredStudents(filtered);
-  }, [students, selectedCohort, selectedGrade, searchTerm]);
+  }, [students, selectedCohort, selectedGrade, searchTerm, currentProgramId, currentProgramName]);
 
   const loadData = async () => {
     try {
@@ -278,6 +290,11 @@ export default function StudentManagement({ onAddAssignment, onViewSchedule }: S
         <div className="flex justify-end">
           <div className="text-sm text-gray-600">
             <span className="font-medium">{filteredStudents.length}</span> of <span className="font-medium">{students.filter(s => s.active).length}</span> students shown
+            {currentProgramName && currentProgramName !== 'All Programs' && (
+              <span className="ml-2 text-blue-600 font-medium">
+                • Filtered by {currentProgramName}
+              </span>
+            )}
           </div>
         </div>
       </div>
