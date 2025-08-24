@@ -47,6 +47,7 @@ export default function ScheduleView({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [, setCurrentTime] = useState(new Date());
+  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Update current time every minute
@@ -61,6 +62,7 @@ export default function ScheduleView({
   // Load assignments when date or target changes
   useEffect(() => {
     const fetchAssignments = async () => {
+      setIsLoadingActivities(true);
       try {
         const dateStr = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
         let url = '/api/assignments?';
@@ -83,6 +85,8 @@ export default function ScheduleView({
       } catch (error) {
         console.error('Error fetching assignments:', error);
         setAssignments([]);
+      } finally {
+        setIsLoadingActivities(false);
       }
     };
 
@@ -157,6 +161,49 @@ export default function ScheduleView({
     return date.toDateString() === new Date().toDateString();
   };
 
+  // Get the start of the current week (Monday)
+  const getCurrentWeekStart = () => {
+    const startOfWeek = new Date(selectedDate);
+    const dayOfWeek = selectedDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startOfWeek.setDate(selectedDate.getDate() + daysToMonday);
+    return startOfWeek;
+  };
+
+  // Check if we're viewing the current week (contains today)
+  const isCurrentWeek = () => {
+    const today = new Date();
+    const weekDates = getWeekDates();
+    return weekDates.some(({ date }) => date.toDateString() === today.toDateString());
+  };
+
+  // Navigate to previous week
+  const navigateToPreviousWeek = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 7);
+    setSelectedDate(newDate);
+  };
+
+  // Navigate to next week
+  const navigateToNextWeek = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 7);
+    setSelectedDate(newDate);
+  };
+
+  // Get week display string
+  const getWeekDisplayString = () => {
+    const weekDates = getWeekDates();
+    const startDate = weekDates[0].date; // Monday
+    const endDate = weekDates[6].date; // Sunday
+    
+    if (startDate.getMonth() === endDate.getMonth()) {
+      return `${startDate.toLocaleDateString('en-US', { month: 'short' })} ${startDate.getDate()}-${endDate.getDate()}`;
+    } else {
+      return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
+  };
+
   const scheduleTitle = viewType === 'student' 
     ? `Schedule: ${student?.fullName || 'Student'}`
     : viewType === 'cohort'
@@ -165,6 +212,11 @@ export default function ScheduleView({
 
   return (
     <div className="bg-gray-50 flex flex-col">
+      {/* Screen reader announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {isLoadingActivities && 'Loading activities for new week'}
+        {!isCurrentWeek() && `Viewing ${getCurrentWeekStart() < new Date() ? 'past' : 'future'} week: ${getWeekDisplayString()}`}
+      </div>
 
       {/* Centered Title */}
       <div className="bg-white border-b">
@@ -173,21 +225,66 @@ export default function ScheduleView({
         </div>
       </div>
 
-      {/* Day Navigation - Horizontal Swipe */}
-      <div className="bg-white border-b">
+      {/* Week Navigation with Day Navigation */}
+      <div className={`bg-white border-b ${
+        !isCurrentWeek() ? 'bg-gray-50' : ''
+      }`}>
+        {/* Week Display and Navigation */}
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 border-b border-gray-100">
+          <button
+            onClick={navigateToPreviousWeek}
+            className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Navigate to previous week"
+            disabled={isLoadingActivities}
+          >
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <div className="text-center flex-1 mx-2 sm:mx-4">
+            <div className={`text-sm sm:text-base font-medium ${
+              !isCurrentWeek() ? 'text-gray-500' : 'text-gray-900'
+            }`}>
+              {getWeekDisplayString()}
+            </div>
+            {!isCurrentWeek() && (
+              <div className="text-xs text-gray-400 mt-1">
+                {getCurrentWeekStart() < new Date() ? 'Past Week' : 'Future Week'}
+              </div>
+            )}
+          </div>
+          
+          <button
+            onClick={navigateToNextWeek}
+            className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Navigate to next week"
+            disabled={isLoadingActivities}
+          >
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+        
+        {/* Day Navigation - Horizontal Swipe */}
         <div className="flex justify-center">
-          <div className="flex overflow-x-auto scrollbar-hide px-4 py-3">
+          <div className="flex overflow-x-auto scrollbar-hide px-2 sm:px-4 py-3 gap-1 sm:gap-2">
             {getWeekDates().map(({ short, date, index }) => (
               <button
                 key={index}
                 onClick={() => setSelectedDate(new Date(date))}
-                className={`flex-shrink-0 px-4 py-2 mx-1 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors touch-manipulation min-w-0 ${
                   isSelectedDate(date)
                     ? 'bg-blue-600 text-white'
                     : isToday(date)
                     ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                    : !isCurrentWeek()
+                    ? 'text-gray-500 hover:bg-gray-100 active:bg-gray-200'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                disabled={isLoadingActivities}
+                aria-label={`Select ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`}
               >
                 <div className="text-center">
                   <div className="font-semibold">{short}</div>
@@ -200,9 +297,26 @@ export default function ScheduleView({
       </div>
 
       {/* Current Date Display */}
-      <div className="bg-white px-4 py-3 border-b text-center">
-        <h3 className="text-lg font-medium text-gray-900">{formatDate(selectedDate)}</h3>
-        <p className="text-sm text-gray-600">{assignments.length} assignment{assignments.length !== 1 ? 's' : ''} scheduled</p>
+      <div className={`px-4 py-3 border-b text-center ${
+        !isCurrentWeek() ? 'bg-gray-50' : 'bg-white'
+      }`}>
+        <h3 className={`text-lg font-medium ${
+          !isCurrentWeek() ? 'text-gray-600' : 'text-gray-900'
+        }`}>
+          {formatDate(selectedDate)}
+        </h3>
+        {isLoadingActivities ? (
+          <div className="flex items-center justify-center mt-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            <span className="text-sm text-gray-500">Loading activities...</span>
+          </div>
+        ) : (
+          <p className={`text-sm ${
+            !isCurrentWeek() ? 'text-gray-500' : 'text-gray-600'
+          }`}>
+            {assignments.length} activit{assignments.length !== 1 ? 'ies' : 'y'} scheduled
+          </p>
+        )}
       </div>
 
       {/* Timeline List */}
@@ -214,13 +328,13 @@ export default function ScheduleView({
         {assignments.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 text-4xl mb-4">📅</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments scheduled</h3>
-            <p className="text-gray-600 mb-4">This day is free of scheduled assignments.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No activities scheduled</h3>
+            <p className="text-gray-600 mb-4">This day is free of scheduled activities.</p>
             <button
               onClick={onAddAssignment}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
-              Add Assignment
+              Add Activity
             </button>
           </div>
         ) : (
@@ -306,7 +420,7 @@ export default function ScheduleView({
               );
             })}
             
-            {/* Add Assignment Block */}
+            {/* Add Activity Block */}
             <div className="relative flex items-center p-4 rounded-lg border-l-4 bg-white shadow-sm hover:shadow-md transition-shadow border-gray-300 hover:bg-gray-50">
               {/* Empty Time Space */}
               <div className="flex-shrink-0 w-20 text-left">
@@ -315,7 +429,7 @@ export default function ScheduleView({
                 </div>
               </div>
 
-              {/* Add Assignment Content */}
+              {/* Add Activity Content */}
               <div className="flex-1 ml-4 min-w-0">
                 <button
                   onClick={onAddAssignment}
@@ -323,10 +437,10 @@ export default function ScheduleView({
                 >
                   <div>
                     <h3 className="text-sm font-semibold text-gray-600 group-hover:text-blue-600 transition-colors">
-                      Add New Assignment
+                      Add New Activity
                     </h3>
                     <p className="text-xs text-gray-500 mt-1">
-                      Create a new assignment for this day
+                      Create a new activity for this day
                     </p>
                   </div>
                   <div className="flex-shrink-0 ml-4">
