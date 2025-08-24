@@ -3,6 +3,59 @@ import { db } from '@/lib/db/connection';
 import * as schema from '@/lib/db/schema';
 import { eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
 
+// Helper function to calculate recurring assignment instances
+function calculateRecurringInstances(assignment: any, targetDate: Date): any[] {
+  if (assignment.recurrence === 'None') {
+    // For non-recurring assignments, just check if the original date matches the target date
+    const originalDate = new Date(assignment.startTime);
+    const targetDateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const originalDateOnly = new Date(originalDate.getFullYear(), originalDate.getMonth(), originalDate.getDate());
+    
+    if (originalDateOnly.getTime() === targetDateOnly.getTime()) {
+      return [assignment];
+    }
+    return [];
+  }
+
+  if (assignment.recurrence === 'Weekly') {
+    const originalStart = new Date(assignment.startTime);
+    const originalEnd = new Date(assignment.endTime);
+    
+    // Calculate what day of the week the original assignment was on
+    const originalDayOfWeek = originalStart.getDay();
+    
+    // Find the target date's day of the week
+    const targetDayOfWeek = targetDate.getDay();
+    
+    // If it's the same day of the week, calculate the new times
+    if (originalDayOfWeek === targetDayOfWeek) {
+      // Calculate the time difference in milliseconds within the day
+      const originalHours = originalStart.getHours();
+      const originalMinutes = originalStart.getMinutes();
+      const originalSeconds = originalStart.getSeconds();
+      const originalMs = originalStart.getMilliseconds();
+      
+      // Create new start time for the target date
+      const newStartTime = new Date(targetDate);
+      newStartTime.setHours(originalHours, originalMinutes, originalSeconds, originalMs);
+      
+      // Create new end time for the target date
+      const newEndTime = new Date(newStartTime.getTime() + (originalEnd.getTime() - originalStart.getTime()));
+      
+      // Return the assignment with updated times
+      return [{
+        ...assignment,
+        startTime: newStartTime.toISOString(),
+        endTime: newEndTime.toISOString()
+      }];
+    }
+  }
+
+  // Add other recurrence patterns here (Daily, Monthly, etc.) as needed
+  
+  return [];
+}
+
 export async function GET(request: Request) {
   const timestamp = new Date().toISOString();
   try {
@@ -34,22 +87,8 @@ export async function GET(request: Request) {
         eq(schema.assignments.active, true)
       ];
 
-      if (date) {
-        // Create UTC date range for the specified date
-        const startOfDay = new Date(date + 'T00:00:00.000Z');
-        const endOfDay = new Date(date + 'T23:59:59.999Z');
-
-        console.log(`[ASSIGNMENTS-API] ${timestamp} - Date filter:`, {
-          date,
-          startOfDay: startOfDay.toISOString(),
-          endOfDay: endOfDay.toISOString()
-        });
-
-        whereConditions.push(
-          gte(schema.assignments.startTime, startOfDay),
-          lte(schema.assignments.startTime, endOfDay)
-        );
-      }
+      // Remove date filtering from the database query - we'll handle it after fetching all assignments
+      const requestedDate = date ? new Date(date + 'T12:00:00.000Z') : null; // Use noon to avoid timezone issues
 
       const query = db
         .select({
@@ -74,8 +113,26 @@ export async function GET(request: Request) {
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
         .where(and(...whereConditions));
 
-      assignments = await query.orderBy(schema.assignments.startTime);
-      console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for student ${studentId}`);
+      let allAssignments = await query.orderBy(schema.assignments.startTime);
+      
+      // If a date is specified, filter assignments based on recurrence logic
+      if (requestedDate) {
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Date filter requested:`, {
+          date,
+          requestedDate: requestedDate.toISOString()
+        });
+
+        assignments = [];
+        for (const assignment of allAssignments) {
+          const recurringInstances = calculateRecurringInstances(assignment, requestedDate);
+          assignments.push(...recurringInstances);
+        }
+        
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - After recurring filter: ${assignments.length} assignments for student ${studentId} on ${date}`);
+      } else {
+        assignments = allAssignments;
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for student ${studentId} (no date filter)`);
+      }
     } else if (cohortId) {
       // Get assignments for a cohort (all students in the cohort)
       const cohortStudents = await db
@@ -98,22 +155,8 @@ export async function GET(request: Request) {
         eq(schema.assignments.active, true)
       ];
 
-      if (date) {
-        // Create UTC date range for the specified date
-        const startOfDay = new Date(date + 'T00:00:00.000Z');
-        const endOfDay = new Date(date + 'T23:59:59.999Z');
-
-        console.log(`[ASSIGNMENTS-API] ${timestamp} - Cohort date filter:`, {
-          date,
-          startOfDay: startOfDay.toISOString(),
-          endOfDay: endOfDay.toISOString()
-        });
-
-        whereConditions.push(
-          gte(schema.assignments.startTime, startOfDay),
-          lte(schema.assignments.startTime, endOfDay)
-        );
-      }
+      // Remove date filtering from the database query - we'll handle it after fetching all assignments
+      const requestedDate = date ? new Date(date + 'T12:00:00.000Z') : null; // Use noon to avoid timezone issues
 
       const query = db
         .select({
@@ -138,8 +181,26 @@ export async function GET(request: Request) {
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
         .where(and(...whereConditions));
 
-      assignments = await query.orderBy(schema.assignments.startTime);
-      console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for cohort ${cohortId}`);
+      let allAssignments = await query.orderBy(schema.assignments.startTime);
+      
+      // If a date is specified, filter assignments based on recurrence logic
+      if (requestedDate) {
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Cohort date filter requested:`, {
+          date,
+          requestedDate: requestedDate.toISOString()
+        });
+
+        assignments = [];
+        for (const assignment of allAssignments) {
+          const recurringInstances = calculateRecurringInstances(assignment, requestedDate);
+          assignments.push(...recurringInstances);
+        }
+        
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - After recurring filter: ${assignments.length} assignments for cohort ${cohortId} on ${date}`);
+      } else {
+        assignments = allAssignments;
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for cohort ${cohortId} (no date filter)`);
+      }
     } else if (programId) {
       // Get assignments for a program (all students in the program)
       // First get the program name
@@ -173,22 +234,8 @@ export async function GET(request: Request) {
         eq(schema.assignments.active, true)
       ];
 
-      if (date) {
-        // Create UTC date range for the specified date
-        const startOfDay = new Date(date + 'T00:00:00.000Z');
-        const endOfDay = new Date(date + 'T23:59:59.999Z');
-
-        console.log(`[ASSIGNMENTS-API] ${timestamp} - Program date filter:`, {
-          date,
-          startOfDay: startOfDay.toISOString(),
-          endOfDay: endOfDay.toISOString()
-        });
-
-        whereConditions.push(
-          gte(schema.assignments.startTime, startOfDay),
-          lte(schema.assignments.startTime, endOfDay)
-        );
-      }
+      // Remove date filtering from the database query - we'll handle it after fetching all assignments
+      const requestedDate = date ? new Date(date + 'T12:00:00.000Z') : null; // Use noon to avoid timezone issues
 
       const query = db
         .select({
@@ -213,8 +260,26 @@ export async function GET(request: Request) {
         .leftJoin(schema.students, eq(schema.assignments.studentId, schema.students.id))
         .where(and(...whereConditions));
 
-      assignments = await query.orderBy(schema.assignments.startTime);
-      console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for program ${programId}`);
+      let allAssignments = await query.orderBy(schema.assignments.startTime);
+      
+      // If a date is specified, filter assignments based on recurrence logic
+      if (requestedDate) {
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Program date filter requested:`, {
+          date,
+          requestedDate: requestedDate.toISOString()
+        });
+
+        assignments = [];
+        for (const assignment of allAssignments) {
+          const recurringInstances = calculateRecurringInstances(assignment, requestedDate);
+          assignments.push(...recurringInstances);
+        }
+        
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - After recurring filter: ${assignments.length} assignments for program ${programId} on ${date}`);
+      } else {
+        assignments = allAssignments;
+        console.log(`[ASSIGNMENTS-API] ${timestamp} - Found ${assignments.length} assignments for program ${programId} (no date filter)`);
+      }
     }
 
     console.log(`[ASSIGNMENTS-API] ${timestamp} - Returning assignments:`, 
