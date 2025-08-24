@@ -9,12 +9,16 @@ export async function GET() {
     // Initialize database if needed
     await initializeDatabase();
     
-    // Check if DEFAULT_ORG_ID is available
+    // Check if DEFAULT_ORG_ID is available after initialization
     if (!DEFAULT_ORG_ID) {
-      return NextResponse.json(
-        { error: 'Database not initialized. Please call /api/init first.' },
-        { status: 503 }
-      );
+      // Try initialization once more
+      await initializeDatabase();
+      if (!DEFAULT_ORG_ID) {
+        return NextResponse.json(
+          { error: 'Database initialization failed. Please try again.' },
+          { status: 503 }
+        );
+      }
     }
 
     const cohortsWithStudentCount = await db

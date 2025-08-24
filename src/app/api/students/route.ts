@@ -13,10 +13,14 @@ export async function GET() {
     
     // Double-check if constants are now available
     if (!DEFAULT_ORG_ID) {
-      return NextResponse.json(
-        { error: 'Database initialization failed' },
-        { status: 500 }
-      );
+      // Try initialization once more
+      await initializeDatabase();
+      if (!DEFAULT_ORG_ID) {
+        return NextResponse.json(
+          { error: 'Database initialization failed. Please try again.' },
+          { status: 500 }
+        );
+      }
     }
 
     // Query students with all fields including program
